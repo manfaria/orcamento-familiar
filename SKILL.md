@@ -20,44 +20,15 @@ Transforma os extratos bancários de uma família num dashboard com a despesa m�
 
 Quem usa esta skill não é necessariamente técnico. Explica sempre o que vais fazer e porquê, em linguagem simples. Não fales em scripts, CSV, regex ou JSON: fala em "ficheiros", "regras", "categorias" e "dashboard". Os detalhes técnicos ficam para quem perguntar.
 
-**No início**, antes de pedir seja o que for, apresenta o processo numa mensagem curta, adaptada a este modelo:
+**No início**, antes de pedir seja o que for, apresenta o processo numa mensagem curta: o que vais fazer, do que precisas, quanto demora e como tratas a privacidade. Usa o modelo em `references/comunicacao.md`.
 
-> Vou ajudar-vos a montar o vosso Orçamento Familiar a partir dos extratos bancários. Funciona assim:
-> 1. Envias-me os extratos (ou dizes-me em que pasta estão).
-> 2. Faço-te umas perguntas sobre as contas: de quem é cada uma e como pagam as despesas da casa.
-> 3. Proponho categorias para as despesas e ajustamos juntos.
-> 4. Pesquiso os movimentos que não reconheço e pergunto-te só os que ficarem por esclarecer.
-> 5. Comparo com o vosso orçamento, se tiverem um (se não, proponho um).
-> 6. Mostro quanto cada um contribui para a família e sugiro onde dá para poupar.
-> 7. No fim, entrego um dashboard que podem consultar e atualizar todos os meses.
->
-> **Do que preciso:** os extratos dos últimos 12 meses de todas as contas que pagam despesas da família (conta conjunta, contas pessoais e cartões de crédito). Excel ou CSV são melhores do que PDF.
->
-> **Quanto tempo demora:** a primeira vez é a mais demorada, porque há mais perguntas. Nos meses seguintes é rápido, porque guardo as vossas respostas.
->
-> **Privacidade:** os extratos ficam só nesta conversa e não os envio para outros serviços. Uso a pesquisa na web apenas para nomes de empresas. O dashboard é privado até decidirem partilhá-lo.
->
-> Isto não é aconselhamento financeiro: são as vossas contas, organizadas.
+**Durante o trabalho**, abre cada passo com uma frase sobre o que vais fazer e porquê. Explica os problemas com um exemplo do extrato. Nas perguntas, dá opções e aceita "não sei".
 
-**Durante o trabalho:**
-- **No início de cada passo**, diz numa frase o que vais fazer e porquê. Por exemplo: "Agora vou ver se os saldos batem certo, para garantir que não falta nenhum extrato."
-- **Quando encontrares um problema**, explica-o com um exemplo concreto do extrato e diz o que precisas.
-- **Quando fizeres perguntas**, dá opções sempre que possível e aceita "não sei".
-
-**No fim**, explica como ler o dashboard:
-- **"Ver":** muda entre tudo, só a família e os gastos pessoais de cada pessoa.
-- **Médias:** são por mês, e cada conta é dividida pelos meses que o seu extrato cobre.
-- **Meses com asterisco:** estão incompletos (nem todas as contas têm extrato desse mês inteiro).
-- **Contribuições:** o que cada pessoa põe na família (transferências para a conta conjunta e despesas da família pagas da conta pessoal).
-- **Divisão justa:** compara o que cada um contribui com uma divisão a meias e com uma proporcional ao rendimento.
-- **Extraordinários:** ficam fora das médias para não as distorcer, mas aparecem numa secção própria.
-- **Olho:** esconde os valores e desfoca as descrições, para tirar screenshots.
-
-Depois explica como atualizar nos meses seguintes e oferece o lembrete mensal (passo 9).
+**No fim**, explica como ler o dashboard (resumo em `references/comunicacao.md`), como atualizar nos meses seguintes, e oferece o lembrete mensal (passo 9).
 
 ## O que a skill traz
 
-`SKILL_DIR` é a pasta onde está este ficheiro. Os scripts precisam de Python 3.9+ com `pip install pandas openpyxl xlrd pdfplumber` (instala o que faltar; em alguns ambientes é preciso `--break-system-packages`).
+`SKILL_DIR` é a pasta onde está este ficheiro. Os scripts precisam de Python 3.9+ com `pandas` e `openpyxl`; `xlrd` só para ficheiros `.xls` e `pdfplumber` só para PDF. Instala o que faltar (em alguns ambientes é preciso `--break-system-packages`). Se o ambiente não deixar instalar pacotes, lê a secção "Compatibilidade".
 
 | Ficheiro | Para que serve |
 |---|---|
@@ -68,9 +39,17 @@ Depois explica como atualizar nos meses seguintes e oferece o lembrete mensal (p
 | `scripts/construir_dashboard.py` | Gera `Orcamento_Familiar.html` a partir de `assets/dashboard.html`. |
 | `scripts/enable_banking.py` | Opcional: descarrega movimentos diretamente dos bancos. Ver `references/enable_banking.md`. |
 | `assets/regras_base.csv` | Regras para centenas de comerciantes e serviços portugueses. É copiado para a pasta de trabalho como `regras.csv`. |
-| `references/` | `config.md` (formato do config), `categorias.md`, `identificacao.md`, `otimizacao.md`, `divisao_justa.md`, `agendamento.md`, `enable_banking.md`. Lê cada um quando chegares ao passo correspondente. |
+| `references/` | `comunicacao.md`, `config.md`, `regras.md`, `categorias.md`, `identificacao.md`, `otimizacao.md`, `divisao_justa.md`, `agendamento.md`, `enable_banking.md`. Lê cada um quando chegares ao passo correspondente. |
 
-Todos os scripts recebem `--config CAMINHO/config.json` e trabalham na pasta desse config. Corre-os sempre sem esconder erros e confirma o código de saída. Um script que falhou em silêncio leva a um dashboard com dados antigos.
+Todos os scripts recebem `--config CAMINHO/config.json` e trabalham na pasta desse config. Corre-os sempre sem esconder erros e confirma o código de saída.
+
+## Compatibilidade
+
+A skill segue o padrão aberto Agent Skills e funciona fora do Claude, com estas adaptações:
+- **Sem instalar pacotes nem rede** (por exemplo, o ambiente de scripts do Microsoft 365 Copilot): confirma no início que `pandas` e `openpyxl` estão disponíveis. Sem `pdfplumber` ou `xlrd`, pede os extratos em CSV ou `.xlsx`. A Enable Banking só funciona no computador da família.
+- **Sem artifacts:** entrega `Orcamento_Familiar.html` como ficheiro para descarregar e abrir no browser.
+- **Sem acesso a pastas do computador:** pede os extratos como anexos. No fim, entrega também a pasta de trabalho num zip (sem os extratos). Na atualização seguinte, pede esse zip, os extratos novos e os anteriores que ainda contam para os últimos 12 meses.
+- **Lembretes:** usa a funcionalidade de tarefas agendadas do assistente, se existir (passo 9).
 
 ## Pasta de trabalho
 
@@ -78,8 +57,7 @@ Tudo o que a família precisa para atualizar no mês seguinte fica numa pasta `o
 - `config.json`: pessoas, contas, orçamento, sugestões e decisões gerais.
 - `regras.csv`: regras de classificação (as da família no topo, as base por baixo).
 - `decisoes.md`: registo das respostas do utilizador, com data (o "porquê" das regras).
-- Gerados pelos scripts: `movimentos.csv`, `movimentos_meta.json`, `verificacao.md`, `movimentos_classificados.csv`, `por_identificar.csv`, `analise.json`, `Orcamento_Familiar.html`.
-- `estado.json`: escrito pelo `construir_dashboard.py`. Guarda a data da última atualização e até que dia vai o extrato de cada conta. É o que a atualização mensal e o lembrete agendado consultam para saber o que é novo.
+- Gerados pelos scripts: os ficheiros de movimentos, `verificacao.md`, `analise.json`, `Orcamento_Familiar.html` e `estado.json` (data da última atualização e até quando vai cada conta, que a atualização mensal e o lembrete consultam).
 - No config, `dashboard_url`: o link do dashboard publicado, para as atualizações irem sempre para o mesmo link.
 
 Se a pasta já tiver `config.json`, estás numa **atualização**: salta para "Atualização mensal".
@@ -99,10 +77,7 @@ Faz estas perguntas (de escolha múltipla, com resposta livre, quando a interfac
 
 1. **Quem faz parte do orçamento:** as pessoas que contribuem com dinheiro. Os filhos só entram como categoria de despesa.
 2. **De quem é cada conta e cada ficheiro:** conjunta, pessoal de alguém, ou cartão de crédito de alguém (e qual a conta que o paga).
-3. **Como entra o dinheiro para as despesas da família:**
-   - Se há conta conjunta: transferências mensais fixas (de quanto?), depósitos em numerário, outras entradas.
-   - Se não há: quem paga o quê, se fazem acertos (MB WAY, transferências), que despesas são sempre da família.
-   - Se só existe uma conta conjunta: tudo é da família. Pergunta só de onde vem o dinheiro.
+3. **Como entra o dinheiro para as despesas da família:** com conta conjunta, que transferências mensais e depósitos entram; sem conta conjunta, quem paga o quê e que acertos fazem; se só há a conjunta, tudo é da família e basta saber de onde vem o dinheiro.
 4. **Despesas da família pagas da conta pessoal:** renda, luz, supermercado, creche… Quais e por quem.
 5. **Ajudas de fora:** pais, avós ou outros que transferem dinheiro, e para que conta.
 6. **Nomes nas transferências:** como aparece o nome de cada pessoa e de quem ajuda (por exemplo "TRF. DE ANA P COSTA"). Ajuda a detetar contribuições.
@@ -133,7 +108,7 @@ Escreve o `config.json` (formato e exemplo em `references/config.md`). Regista a
    - categorias próprias da família (animais, igreja, desporto dos filhos…);
    - **o que é da família e o que é pessoal**.
    Sem conta conjunta, usa `"ambito_por_categoria"` no config para dizer que categorias pagas das contas pessoais são sempre da família.
-5. Aplica as respostas em `regras.csv`. As regras da família vão **acima** das regras base (a primeira regra que encaixa ganha). Para renomear uma categoria, muda-a em todas as regras. Volta a correr `classificar.py`.
+5. Aplica as respostas em `regras.csv` (formato e exemplos em `references/regras.md`). As regras da família vão **acima** das regras base. Volta a correr `classificar.py`.
 
 ## Passo 4. Movimentos por identificar
 
@@ -206,19 +181,14 @@ Escreve 3 a 7 sugestões em `"sugestoes"` no config: `{"titulo", "texto", "poupa
    - Compara esses valores com `analise.json`.
    - Experimenta o botão do olho: não pode sobrar nenhum valor em euros visível.
 3. **Entrega.**
-   - Se tiveres a ferramenta de artifacts, publica-o como artifact privado e guarda o link em `"dashboard_url"` no config. Nas atualizações, publica no mesmo link (passa esse link à ferramenta) para a família não ficar com vários dashboards. Se não tiveres a ferramenta, envia o ficheiro.
+   - Se tiveres a ferramenta de artifacts, publica-o como artifact privado e guarda o link em `"dashboard_url"` no config. Nas atualizações, publica no mesmo link para a família não ficar com vários dashboards. Se não tiveres a ferramenta, envia o ficheiro HTML.
    - Explica o filtro "Ver" (Tudo, Família, cada pessoa).
    - Explica o botão do olho: esconde os valores e desfoca as descrições, para screenshots.
-4. **Resume em poucas linhas:**
-   - despesa média mensal da família;
-   - as três maiores categorias;
-   - contribuição de cada pessoa;
-   - as duas sugestões com mais impacto;
-   - o que ficou por identificar.
+4. **Resume em poucas linhas:** despesa média mensal da família, as três maiores categorias, a contribuição de cada pessoa, as duas sugestões com mais impacto e o que ficou por identificar.
 
 ## Passo 9. Lembrete mensal (agendamento)
 
-No fim da primeira análise, pergunta se a família quer um lembrete mensal para atualizar o dashboard. O lembrete é uma tarefa agendada no Claude. Por exemplo, no dia 5 de cada mês, que é quando os extratos do mês anterior já estão disponíveis. A tarefa:
+No fim da primeira análise, pergunta se a família quer um lembrete mensal para atualizar o dashboard. O lembrete é uma tarefa agendada do assistente (no Claude, as tarefas agendadas). Por exemplo, no dia 5 de cada mês, que é quando os extratos do mês anterior já estão disponíveis. A tarefa:
 1. vê se já há extratos novos na pasta;
 2. se houver, faz a atualização e conta o que mudou;
 3. se não houver, pergunta se já os têm e explica onde os pôr.
@@ -226,9 +196,9 @@ No fim da primeira análise, pergunta se a família quer um lembrete mensal para
 Como criar:
 - **Ferramentas:** usa as ferramentas de tarefas agendadas que esta sessão tiver (procura-as se não estiverem carregadas). Não uses agendamentos que só existem dentro da sessão atual: desaparecem quando a conversa fecha.
 - **Instrução completa:** cada execução começa uma conversa nova, sem memória desta. A instrução da tarefa tem de ser completa e independente. Usa o modelo em `references/agendamento.md`, com os caminhos verdadeiros da pasta de trabalho e dos extratos.
-- **Computador:** se a pasta estiver no computador do utilizador, a tarefa precisa do computador ligado e da app do Claude aberta à hora marcada. Explica isto ao utilizador.
+- **Computador:** se a pasta estiver no computador do utilizador, a tarefa precisa do computador ligado e da app do assistente aberta à hora marcada. Explica isto ao utilizador.
 - **Confirmação:** confirma com o utilizador o dia, a hora e se as execuções avançam sozinhas ou pedem aprovação. Diz o que ficou definido.
-- **Sem ferramentas:** se esta sessão não tiver ferramentas de agendamento, diz que não consegues criar o lembrete daqui. Sugere pedir o lembrete ao Claude numa conversa que o permita, ou pôr um lembrete no calendário com a frase "atualizar o Orçamento Familiar com os extratos de <mês>".
+- **Sem ferramentas:** se esta sessão não tiver ferramentas de agendamento, diz que não consegues criar o lembrete daqui. Sugere pedir o lembrete numa conversa que o permita, ou pôr um lembrete no calendário com a frase "atualizar o Orçamento Familiar com os extratos de <mês>".
 
 ## Atualização mensal
 
@@ -242,45 +212,14 @@ Como criar:
    - pergunta só pelos movimentos novos em "Por identificar";
    - `analisar.py` e `construir_dashboard.py`;
    - publica no link guardado em `dashboard_url`.
-4. **Conta o que mudou:**
-   - o mês novo face à média;
-   - categorias que subiram;
-   - subscrições novas;
-   - autorizações do Enable Banking a expirar (se usarem).
+4. **Conta o que mudou:** o mês novo face à média, categorias que subiram, subscrições novas e autorizações da Enable Banking a expirar (se usarem).
 
 Para automatizar (descarregar todos os dias e rever as dúvidas uma vez por semana ou por mês), segue `references/enable_banking.md`.
-
-## Formato das regras (`regras.csv`)
-
-Colunas: `id_movimento, conta, padrao, sinal, valor_min, valor_max, data_de, data_ate, tipo, categoria, subcategoria, ambito, contribuinte, nota`.
-- `conta`: vazio para todas; o id de uma conta; ou `tipo:conjunta`, `tipo:pessoal`, `tipo:cartao`. Várias separadas por `|`.
-- `padrao`: expressão regular, sem distinção de maiúsculas.
-- `sinal`: `saida`, `entrada` ou vazio.
-- `tipo`:
-  - `D` despesa;
-  - `R` rendimento;
-  - `T` transferência interna;
-  - `C` pagamento de cartão;
-  - `P` poupança e investimento;
-  - `X` extraordinário.
-- `ambito`: `familia` ou o id de uma pessoa. Vazio usa o da conta: conjunta é família; pessoal é do titular.
-- `contribuinte`: id de quem contribui (para entradas na conta conjunta que não foram detetadas automaticamente).
-- Linhas começadas por `#` são comentários.
-
-Exemplos:
-```
-,ana,SENHORIO,saida,,,,,D,Casa & contas,Renda,familia,,Renda paga pela Ana da conta dela
-,,NIA ROSA,,,,,,D,Saúde,Consultas & exames,,,Clínica de fisioterapia (resposta da família)
-3f2a9c1b7d4e,,,,,,,,X,Extraordinários,Compra do carro,familia,,Entrada do carro novo
-,conjunta,DEP[ÓO]SITO,entrada,500,,,,T,Contribuição,rui,familia,rui,Depósitos em numerário do Rui na conjunta
-```
 
 ## Erros que já aconteceram e não podem repetir-se
 
 - **Pagamentos do cartão de crédito contados como despesa** além das compras do cartão (dobro). Se o extrato do cartão não estiver incluído, o pagamento é a única informação: o classificador marca-o como "Cartão de crédito sem extrato" e deves pedir o extrato.
-- **Transferências da conta pessoal para a conjunta contadas como despesa.**
-- **Dividir por 12 uma conta com menos meses de extrato.**
-- **Linhas perdidas em PDFs** (por exemplo, a primeira linha de cada página). As quebras de saldo denunciam-nas; confirma vendo a página como imagem.
+- **Linhas perdidas em PDFs** (por exemplo, a primeira linha de cada página): as quebras de saldo denunciam-nas.
 - **Sinal trocado no cartão**, ou datas sem ano.
 - **Reembolsos tratados como rendimento.** Reembolsos de seguros de saúde e devoluções de lojas descontam na categoria onde aconteceram.
 - **Assumir que uma transferência para alguém é despesa**, ou que uma empresa desconhecida é de certo tipo, sem pesquisar e perguntar.

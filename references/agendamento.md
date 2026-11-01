@@ -1,11 +1,11 @@
 # Lembrete mensal com uma tarefa agendada
 
-O objetivo é que a família não se esqueça de atualizar o dashboard. Uma vez por mês, o Claude verifica se já há extratos novos. Se houver, atualiza o dashboard e conta o que mudou. Se não houver, pergunta se já os têm e explica onde os pôr.
+O objetivo é que a família não se esqueça de atualizar o dashboard. Uma vez por mês, o assistente verifica se já há extratos novos. Se houver, atualiza o dashboard e conta o que mudou. Se não houver, pergunta se já os têm e explica onde os pôr.
 
 ## Antes de criar
 Confirma com o utilizador:
 - **Quando:** sugere o dia 5 de cada mês de manhã, quando os extratos do mês anterior já estão disponíveis. Evita horas certas (por exemplo, 8:50 em vez de 9:00).
-- **Onde estão as coisas:** o caminho da pasta de trabalho (`config.json`) e da pasta dos extratos. Se estiverem no computador do utilizador, a tarefa precisa do computador ligado e da app do Claude aberta à hora marcada.
+- **Onde estão as coisas:** o caminho da pasta de trabalho (`config.json`) e da pasta dos extratos. Se estiverem no computador do utilizador, a tarefa precisa do computador ligado e da app do assistente aberta à hora marcada.
 - **Aprovações:** se as execuções podem avançar sozinhas ou se devem pedir aprovação. Uma tarefa que pede aprovação fica parada se ninguém estiver a ver; diz isso ao utilizador.
 - **Avisos:** como quer ser avisado (notificação, email), se a ferramenta o permitir.
 
@@ -39,5 +39,5 @@ Nunca inventes valores: tudo vem dos extratos. Não envies os extratos para outr
 
 ## Sem ferramentas de agendamento
 Se a sessão não tiver ferramentas de tarefas agendadas, diz que não consegues criar o lembrete daqui. Sugere:
-- pedir o lembrete ao Claude numa conversa que permita tarefas agendadas, usando o modelo acima;
+- pedir o lembrete numa conversa que permita tarefas agendadas, usando o modelo acima;
 - ou pôr um lembrete no calendário: "atualizar o Orçamento Familiar com os extratos de <mês>". Nesse dia basta abrir uma conversa e pedir "atualiza o Orçamento Familiar".

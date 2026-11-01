@@ -34,10 +34,10 @@ Opcional, para quem quer deixar de descarregar extratos à mão. A Enable Bankin
 - `python enable_banking.py descarregar --pasta orcamento-familiar/eb --config orcamento-familiar/config.json --desde 2026-10-01` escreve `eb_<conta>.csv` no formato que `ler_extratos.py` lê.
 - `python enable_banking.py estado --pasta orcamento-familiar/eb` mostra quanto falta para cada autorização expirar.
 
-## Automatizar (descarregar sozinho e rever as dúvidas com o Claude)
+## Automatizar (descarregar sozinho e rever as dúvidas com o assistente)
 A combinação mais simples, que mantém a chave só no computador da família:
 1. **Agendador do sistema** (Agendador de Tarefas no Windows, launchd ou cron no Mac/Linux): corre `enable_banking.py descarregar` todos os dias.
-2. **Tarefa agendada no Claude** (semanal ou mensal), se o Claude tiver acesso à pasta no computador:
+2. **Tarefa agendada no assistente** (semanal ou mensal), se ele tiver acesso à pasta no computador (no Claude, as tarefas agendadas):
    1. corre `ler_extratos.py`, `verificar.py`, `classificar.py`, `analisar.py` e `construir_dashboard.py`;
    2. atualiza o dashboard;
    3. envia as dúvidas novas (movimentos por identificar, autorizações a expirar).
