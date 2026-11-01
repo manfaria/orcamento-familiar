@@ -1,14 +1,15 @@
 id_movimento,conta,padrao,sinal,valor_min,valor_max,data_de,data_ate,tipo,categoria,subcategoria,ambito,contribuinte,nota
 # Regras base para extratos portugueses. A primeira regra que encaixa ganha.,,,,,,,,,,,,,
 # As regras da família (respostas do utilizador) ficam ACIMA desta linha. Colunas:,,,,,,,,,,,,,
-# conta: vazio = todas; id da conta; ou tipo:conjunta / tipo:pessoal / tipo:cartao (várias separadas por |),,,,,,,,,,,,,
+# conta: vazio = todas; id da conta; ou tipo:conjunta / tipo:pessoal / tipo:cartao / tipo:refeicao (várias separadas por |),,,,,,,,,,,,,
 # padrao: expressão regular sem distinção de maiúsculas; sinal: saida / entrada / vazio,,,,,,,,,,,,,
-# tipo: D despesa / R rendimento / T transferência interna / C pagamento de cartão / P poupança / X extraordinário,,,,,,,,,,,,,
+# tipo: D despesa / R rendimento / T transferência interna / C pagamento de cartão / P poupança / X extraordinário / I imóvel arrendado,,,,,,,,,,,,,
 # ambito: familia ou id da pessoa (vazio = da conta: conjunta → familia; pessoal → titular),,,,,,,,,,,,,
 # ---------- cartões de crédito (pagamentos no banco) ----------,,,,,,,,,,,,,
 ,,PAGAMENTO RECEBIDO|PAGAMENTO EFETUADO|PAGAMENTO POR D[ÉE]BITO DIRETO|PAGAMENTO POR MULTIBANCO,entrada,,,,,C,Pagamento de cartão,,,,
 ,tipo:conjunta|tipo:pessoal,PAG(AMENTO)?\.? ?(DE |AO )?CART[ÃA]O|CART[ÃA]O (DE )?CR[ÉE]DITO|WIZINK|CETELEM|UNIBANCO|COFIDIS|ONEY|CARTAO UNIVERSO|UNIVERSO SONAE|BANKINTER CONSUMER,saida,,,,,C,Pagamento de cartão,,,,
 # ---------- rendimentos ----------,,,,,,,,,,,,,
+,tipo:refeicao,CARREG|CR[ÉE]DITO|SUBS[ÍI]DIO|ENTIDADE PATRONAL|EMPREGADOR|BENEF[ÍI]CIO|PLAFOND|TOP.?UP|RECARGA|ATRIBUI|DISPONIBILIZ,entrada,,,,,R,Rendimentos,Cartão refeição,,,Carregamento do cartão refeição pelo empregador
 ,,VENCIMENTO|ORDENADO|SAL[ÁA]RIO|REMUNERA[ÇC][ÃA]O|PROCESSAMENTO SAL,entrada,,,,,R,Rendimentos,Salário,,,
 ,,SEGURAN[ÇC]A SOCIAL|INST\.? ?SEG|ISS IP|SUBS[ÍI]DIO|ABONO,entrada,,,,,R,Rendimentos,Subsídios & Segurança Social,,,
 ,,AUTORIDADE TRIBUT|REEMB(OLSO)?\.? ?(DE )?IRS|\bAT\b.*REEMB|FINAN[ÇC]AS,entrada,,,,,R,Rendimentos,Reembolso de IRS,,,

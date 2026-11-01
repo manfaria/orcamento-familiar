@@ -17,6 +17,10 @@ Lê movimentos_classificados.csv e escreve analise.json com:
   orcamento         planeado vs real, por linha (se houver orçamento no config)
   contribuicoes     quanto cada pessoa e contribuidor externo põe na família, por mês
   divisao           divisão igual e proporcional ao rendimento
+  refeicao          cartões refeição: carregado, gasto, parte da família e saldo
+  fora_dos_extratos o que a família indicou e não passa pelos extratos, por âmbito
+  imoveis           imóveis arrendados (tipo I): rendas, custos e resultado por mês
+  adiantamentos     saídas que voltaram com o mesmo valor (possíveis adiantamentos reembolsados)
 Os valores são todos tirados dos extratos; nada é estimado.
 """
 import argparse
@@ -183,7 +187,7 @@ def main(config_path):
             rend[p] = {"valor": float(cfg["rendimentos"][p]), "fonte": "indicado pelo utilizador"}
         else:
             so_dela = [cid for cid, c in contas.items() if c.get("titulares", []) == [p]]
-            sal = df[(df.tipo == "R") & df.subcategoria.str.contains("Salário|Sal[áa]rio|Vencimento", case=False, regex=True)
+            sal = df[(df.tipo == "R") & df.subcategoria.str.contains("Sal[áa]rio|Vencimento|Cart[ãa]o refei", case=False, regex=True)
                      & df.conta.isin(so_dela)]
             if len(sal):
                 v = sum(g.valor.sum() / meses_conta[c] for c, g in sal.groupby("conta"))
@@ -195,6 +199,54 @@ def main(config_path):
             tot = sum(r["valor"] for r in rend.values())
             div["metodos"]["proporcional"] = {p: r2(a_dividir * rend[p]["valor"] / tot) for p in pessoas}
     A["divisao"] = div
+    # cartões refeição
+    ref = {}
+    for cid, c in contas.items():
+        if c["tipo"] != "refeicao":
+            continue
+        g = df[df.conta == cid]
+        nm_c = max(meses_conta.get(cid, 1), 1)
+        gd = D[D.conta == cid]
+        sald = [x for x in g.sort_values(["data", "ordem"]).saldo.tolist() if str(x).strip() != ""]
+        ref[cid] = {"nome": c.get("nome", cid), "uso": c.get("uso"), "titular": (c.get("titulares") or [""])[0],
+                    "carregado_mes": r2(g[(g.tipo == "R") & (g.valor > 0)].valor.sum() / nm_c),
+                    "gasto_mes": r2(gd.mensal.sum()),
+                    "familia_mes": r2(gd[gd.ambito == "familia"].mensal.sum()),
+                    "pessoal_mes": r2(gd[gd.ambito != "familia"].mensal.sum()),
+                    "por_categoria": {k: r2(v) for k, v in gd.groupby("categoria").mensal.sum().sort_values(ascending=False).items()},
+                    "saldo_final": r2(sald[-1]) if sald else None}
+    A["refeicao"] = ref
+    # fora dos extratos (indicado pela família)
+    fe = cfg.get("fora_dos_extratos", [])
+    A["fora_dos_extratos"] = {"itens": fe,
+                              "familia_mes": r2(sum(f.get("valor_mensal", 0) for f in fe if f.get("ambito", "familia") == "familia")),
+                              "pessoal_mes": r2(sum(f.get("valor_mensal", 0) for f in fe if f.get("ambito", "familia") != "familia"))}
+    # imóveis arrendados (tipo I): categoria = nome do imóvel, subcategoria = renda, prestação, condomínio, IMI…
+    I = df[df.tipo == "I"].copy()
+    imo = {}
+    if len(I):
+        I["mensal"] = I.valor / I.conta.map(meses_conta)
+        for nome, g in I.groupby("categoria"):
+            imo[nome] = {"linhas": {k: r2(v) for k, v in g.groupby("subcategoria").mensal.sum().sort_values(ascending=False).items()},
+                         "entradas_mes": r2(g[g.valor > 0].mensal.sum()), "custos_mes": r2(-g[g.valor < 0].mensal.sum()),
+                         "resultado_mes": r2(g.mensal.sum()), "resultado_periodo": r2(g.valor.sum())}
+    A["imoveis"] = imo
+    # possíveis adiantamentos reembolsados: uma saída e, até 90 dias depois, uma entrada com o mesmo valor
+    ent = df[(df.valor > 0) & (df.categoria.isin(["Por identificar", "Partilhas & MB WAY"]) |
+                               ((df.tipo == "R") & df.subcategoria.isin(["Outros rendimentos", ""])))]
+    sai = df[(df.valor <= -15) & df.tipo.isin(["D", "X"])]
+    adi, usadas = [], set()
+    for o in sai.sort_values("data").itertuples():
+        for e in ent[(ent.valor.round(2) == round(-o.valor, 2))].itertuples():
+            dd = (pd.Timestamp(e.data) - pd.Timestamp(o.data)).days
+            if e.id in usadas or not 0 <= dd <= 90:
+                continue
+            usadas.add(e.id)
+            adi.append({"saida": {"id": o.id, "data": o.data, "conta": o.conta, "descricao": o.descricao, "categoria": o.categoria},
+                        "entrada": {"id": e.id, "data": e.data, "conta": e.conta, "descricao": e.descricao},
+                        "valor": r2(-o.valor), "dias": int(dd)})
+            break
+    A["adiantamentos"] = adi
     # por identificar
     q = D[D.categoria == "Por identificar"]
     A["por_identificar"] = {"movimentos": int(len(q)), "por_mes": r2(q.mensal.sum())}
@@ -222,6 +274,14 @@ def imprimir(A):
     c = A["contribuicoes"]
     print(f"Contribuições ({c['meses']} meses comuns): {c['por_pessoa']} · despesa da família {c['despesa_familia']} · saldo {c['saldo']}")
     print("Divisão:", A["divisao"]["metodos"], "rendimentos:", A["divisao"]["rendimentos"])
+    for cid, r in A["refeicao"].items():
+        print(f"Cartão refeição {r['nome']} ({r['uso']}): carregado {r['carregado_mes']:.2f} €/mês · gasto {r['gasto_mes']:.2f} "
+              f"(família {r['familia_mes']:.2f}, pessoal {r['pessoal_mes']:.2f}) · saldo final {r['saldo_final']}")
+    for n, r in A["imoveis"].items():
+        print(f"Imóvel {n}: entradas {r['entradas_mes']:.2f} − custos {r['custos_mes']:.2f} = {r['resultado_mes']:.2f} €/mês")
+    for a in A["adiantamentos"]:
+        print(f"Adiantamento? {a['saida']['data']} {a['saida']['descricao']} −{a['valor']:.2f} → volta a {a['entrada']['data']} "
+              f"({a['entrada']['descricao']}, {a['dias']} dias)")
     print("Por identificar:", A["por_identificar"])
 
 

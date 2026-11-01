@@ -22,7 +22,11 @@ TIPOS = {
     "C": "Pagamento de cartão",
     "P": "Poupança e investimento",
     "X": "Extraordinário",
+    "I": "Imóvel arrendado",
 }
+
+# Cartão refeição em uso misto: categorias que contam como da família (o resto fica pessoal do titular).
+REFEICAO_MISTO = {"Supermercado & alimentação": "familia"}
 
 
 # ---------------------------------------------------------------- texto
@@ -158,8 +162,11 @@ def ler_config(caminho):
         raise SystemExit("config.json: há contas com o mesmo id.")
     pessoas = {p["id"] for p in cfg.get("pessoas", [])}
     for c in cfg.get("contas", []):
-        if c.get("tipo") not in {"conjunta", "pessoal", "cartao"}:
-            raise SystemExit(f"config.json: a conta {c['id']} tem de ter tipo conjunta, pessoal ou cartao.")
+        if c.get("tipo") not in {"conjunta", "pessoal", "cartao", "refeicao"}:
+            raise SystemExit(f"config.json: a conta {c['id']} tem de ter tipo conjunta, pessoal, cartao ou refeicao.")
+        if c["tipo"] == "refeicao" and c.get("uso") not in {"individual", "familia", "misto"}:
+            raise SystemExit(f"config.json: o cartão refeição {c['id']} tem de ter \"uso\": individual, familia ou misto "
+                             "(pergunta à família como o usa).")
         for t in c.get("titulares", []):
             if t not in pessoas:
                 raise SystemExit(f"config.json: o titular {t} da conta {c['id']} não está em 'pessoas'.")
@@ -177,8 +184,12 @@ def conta_por_id(cfg):
 
 
 def ambito_padrao(conta):
-    """Contas conjuntas pagam a família; contas pessoais e cartões pagam o titular (se for só um)."""
+    """Contas conjuntas pagam a família; contas pessoais e cartões pagam o titular (se for só um).
+    Cartão refeição: com "uso": "familia" paga a família; "individual" e "misto" pagam o titular
+    (no misto, o classificador passa para a família as categorias de "ambito_refeicao")."""
     if conta["tipo"] == "conjunta":
+        return "familia"
+    if conta["tipo"] == "refeicao" and conta.get("uso") == "familia":
         return "familia"
     tit = conta.get("titulares", [])
     return tit[0] if len(tit) == 1 else "familia"

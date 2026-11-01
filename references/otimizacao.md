@@ -17,6 +17,9 @@ As sugestões vêm dos factos em `analise.json`. Cada sugestão diz o que se viu
 | `medias_por_categoria_familia` | As três maiores categorias explicam a maior parte da despesa: é aí que pequenas mudanças pesam. | Vazio. |
 | `contribuicoes.saldo` | A família gasta mais do que entra na conta conjunta (ou acumula dinheiro). | Vazio. |
 | `por_identificar` | Se ainda for grande, a primeira "otimização" é identificar. | Vazio. |
+| `refeicao` | Saldo do cartão refeição a acumular (carregado > gasto): pode pagar mais supermercado da família e libertar dinheiro da conta. Se o uso é individual e sobra saldo, a família pode decidir mudar para uso misto. | A diferença entre carregado e gasto, só se a família decidir usá-la. |
+| `adiantamentos` | Adiantamentos ainda por confirmar ou por devolver: confirmar com a família antes de os tirar das despesas. | Vazio. |
+| `imoveis` | Resultado do imóvel arrendado e despesas anuais do imóvel (IMI, seguro) a reservar. | Vazio. |
 
 ## Energia, telecomunicações e seguros
 Se estas categorias pesarem, podes sugerir comparar tarifários em simuladores independentes. Para eletricidade e gás, o simulador da ERSE. Não indiques um fornecedor.

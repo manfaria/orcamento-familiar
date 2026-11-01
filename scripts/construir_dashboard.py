@@ -6,8 +6,8 @@ Uso: python construir_dashboard.py --config config.json [--saida Orcamento_Famil
 Escreve também estado.json (última atualização e até quando vai cada conta).
 Usa do config.json: familia, pessoas, contribuidores_externos, contas, orcamento (+ orcamento_proposto),
 sugestoes, fora_dos_extratos, notas_categorias, notas_movimentos, rendimentos, divisao.metodo,
-nota_contribuicoes, nota_extraordinarios. Usa de analise.json (se existir): recorrentes, janela_comum
-e rendimentos calculados.
+nota_contribuicoes, nota_extraordinarios e pessoal (detalhe / categorias / total). Usa de analise.json
+(se existir): recorrentes, refeicao, imoveis, janela_comum e rendimentos calculados.
 """
 import argparse
 import datetime as dt
@@ -36,7 +36,7 @@ def main(config_path, saida=None):
             continue
         ini, fim, meses = cob[c["id"]]
         contas.append({"id": c["id"], "nome": c.get("nome", c["id"]), "banco": c.get("banco", ""), "tipo": c["tipo"],
-                       "titulares": c.get("titulares", []), "inicio": ini.isoformat(), "fim": fim.isoformat(), "meses": meses})
+                       "titulares": c.get("titulares", []), "uso": c.get("uso", ""), "inicio": ini.isoformat(), "fim": fim.isoformat(), "meses": meses})
     ini = min(dt.date.fromisoformat(c["inicio"]) for c in contas)
     fim = max(dt.date.fromisoformat(c["fim"]) for c in contas)
     i_c = max(dt.date.fromisoformat(c["inicio"]) for c in contas)
@@ -47,8 +47,20 @@ def main(config_path, saida=None):
         analise = json.loads((base / "analise.json").read_text(encoding="utf-8"))
     ids = {c["id"] for c in contas}
     df = df[df.conta.isin(ids)]
-    tx = [[r.data, r.conta, r.ambito, r.tipo, r.categoria, r.subcategoria, round(r.valor, 2), r.descricao, r.nota,
-           r.contribuinte, r.id] for r in df.itertuples()]
+    # privacidade entre o casal: "pessoal": "detalhe" (por omissão), "categorias" (sem descrições) ou "total" (só o total)
+    modo = cfg.get("pessoal", "detalhe")
+    pessoas_ids = {p["id"] for p in cfg.get("pessoas", [])}
+    tx = []
+    for r in df.itertuples():
+        cat, sub, desc, nota = r.categoria, r.subcategoria, r.descricao, r.nota
+        if modo != "detalhe" and r.ambito in pessoas_ids and r.tipo in ("D", "X", "P"):
+            desc, nota = "Gasto pessoal", ""
+            if modo == "total":
+                cat, sub = "Gastos pessoais", ""
+        tx.append([r.data, r.conta, r.ambito, r.tipo, cat, sub, round(r.valor, 2), desc, nota, r.contribuinte, r.id])
+    recorrentes = analise.get("recorrentes", [])
+    if modo != "detalhe":
+        recorrentes = [x for x in recorrentes if x.get("ambito") not in pessoas_ids]
     rend = {}
     for p in cfg.get("pessoas", []):
         if cfg.get("rendimentos", {}).get(p["id"]) is not None:
@@ -73,7 +85,9 @@ def main(config_path, saida=None):
         "nota_extraordinarios": cfg.get("nota_extraordinarios", ""),
         "rendimentos": rend,
         "divisao_metodo": (cfg.get("divisao") or {}).get("metodo"),
-        "recorrentes": analise.get("recorrentes", [])[:20],
+        "recorrentes": recorrentes[:20],
+        "refeicao": analise.get("refeicao", {}),
+        "imoveis": analise.get("imoveis", {}),
         "tx": tx,
     }
     js = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")

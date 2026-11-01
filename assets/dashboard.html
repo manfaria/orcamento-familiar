@@ -267,7 +267,7 @@ const JANELA = DATA.janela || [];
 const MN = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
 const mCurto = m => MN[+m.slice(5) - 1];
 const mLongo = m => MN[+m.slice(5) - 1] + '/' + m.slice(2, 4);
-const TIPO = {D: 'Despesa', R: 'Rendimento', T: 'Transferência', C: 'Pag. cartão', P: 'Poupança', X: 'Extraordinário'};
+const TIPO = {D: 'Despesa', R: 'Rendimento', T: 'Transferência', C: 'Pag. cartão', P: 'Poupança', X: 'Extraordinário', I: 'Imóvel arrendado'};
 const PESSOAS_VISTA = PESSOAS.filter(p => DATA.tx.some(r => r[2] === p.id));   // só pessoas com gastos pessoais nos extratos
 const SCOPES = ['familia', ...PESSOAS_VISTA.map(p => p.id)];
 const scopeLbl = s => s === 'all' ? 'tudo' : s === 'familia' ? 'família' : nomeDe(s);
@@ -649,9 +649,21 @@ function renderFacts() {
   const X = tx.filter(t => t.t === 'X');
   if (X.length) { const xs = {}; X.forEach(t => xs[t.sub || t.cat] = (xs[t.sub || t.cat] || 0) + t.v);
     box.append(factCard('Extraordinários (fora das médias)', Object.entries(xs).sort((a, b) => a[1] - b[1]).map(([k, v]) => [k, (v > 0 ? '+' : '') + fmt(v)]), DATA.nota_extraordinarios || 'Gastos e entradas pontuais que distorciam a média mensal.')); }
+  const USO = {individual: 'uso individual', familia: 'usado nas despesas da família', misto: 'uso misto'};
+  Object.values(DATA.refeicao || {}).forEach(r => {
+    const rows = [['Carregado por mês', fmt(r.carregado_mes)], ['Gasto por mês', fmt(r.gasto_mes), 'tot'], ['Despesas da família', fmt(r.familia_mes)], [`Pessoal de ${nomeDe(r.titular)}`, fmt(r.pessoal_mes)]];
+    if (r.saldo_final != null) rows.push(['Saldo no fim do extrato', fmt(r.saldo_final)]);
+    box.append(factCard(`${r.nome} (${USO[r.uso] || r.uso})`, rows, 'As compras com o cartão refeição entram nas médias acima, como as de qualquer conta. Os carregamentos contam como rendimento de quem recebe o cartão' + (r.familia_mes > 0.5 ? `; as compras para a família contam como contribuição de ${nomeDe(r.titular)}.` : '.')));
+  });
+  Object.entries(DATA.imoveis || {}).forEach(([nome, r]) => {
+    const rows = Object.entries(r.linhas).sort((a, b) => b[1] - a[1]).map(([k, v]) => [k || 'Outros', (v > 0 ? '+' : '') + fmt(v)]);
+    rows.push(['Resultado por mês', (r.resultado_mes > 0 ? '+' : '') + fmt(r.resultado_mes), 'tot'], ['Resultado no período', (r.resultado_periodo > 0 ? '+' : '') + fmt(r.resultado_periodo), 'tot']);
+    box.append(factCard(`Imóvel arrendado: ${nome} (média/mês)`, rows, 'Rendas recebidas e custos do imóvel (prestação, condomínio, IMI, seguros, obras). Ficam fora das despesas da família e não contam como contribuição de ninguém. A prestação inclui amortização de capital, que é poupança no próprio imóvel.'));
+  });
   const F = DATA.fora_dos_extratos || [];
-  if (F.length) { const rows = F.map(f => [f.nome + (f.pessoa ? ` (${nomeDe(f.pessoa)})` : ''), fmt(f.valor_mensal)]); rows.push(['Total por mês', fmt(F.reduce((s, f) => s + (f.valor_mensal || 0), 0)), 'tot']);
-    box.append(factCard('Fora dos extratos (por mês)', rows, 'Indicado pela família: cartões refeição, cheque-creche, numerário e outros. Não entra nas médias acima.')); }
+  if (F.length) { const ambLbl = f => f.ambito && f.ambito !== 'familia' ? ` · pessoal de ${nomeDe(f.ambito)}` : ' · família';
+    const rows = F.map(f => [f.nome + (f.pessoa ? ` (${nomeDe(f.pessoa)})` : '') + ambLbl(f), fmt(f.valor_mensal)]); rows.push(['Total por mês', fmt(F.reduce((s, f) => s + (f.valor_mensal || 0), 0)), 'tot']);
+    box.append(factCard('Fora dos extratos (por mês)', rows, 'Indicado pela família: cartões refeição sem extrato, cheque-creche, seguros pagos pela empresa, despesas pagas por outros. Não entra nas médias acima.')); }
   const REC = DATA.recorrentes || [];
   if (REC.length) { const rows = REC.slice(0, 10).map(r => [`${r.comerciante} (${C[r.conta] ? C[r.conta].nome : r.conta})`, fmt(r.valor_medio) + '/mês']);
     rows.push(['Total por ano', fmt(REC.reduce((s, r) => s + r.custo_anual, 0)), 'tot']);
@@ -692,7 +704,7 @@ function renderTx() {
 function renderFooter() {
   const f = document.getElementById('footer'); f.replaceChildren();
   [`Cada conta é dividida pelos meses que o seu extrato cobre (${DATA.contas.map(c => `${c.nome}: ${String(c.meses).replace('.', ',')}`).join('; ')}).`,
-   'Transferências entre contas da família, pagamentos do cartão de crédito, poupança e extraordinários não contam como despesa. Os reembolsos e as devoluções descontam na categoria onde aconteceram.',
+   'Transferências entre contas da família, pagamentos do cartão de crédito, poupança, extraordinários, adiantamentos reembolsados e imóveis arrendados não contam como despesa. Os reembolsos e as devoluções descontam na categoria onde aconteceram.',
    `Gerado em ${DATA.gerado_em} com a skill Orçamento Familiar. Os valores vêm apenas dos extratos.`].forEach(s => f.append(el('p', {text: s})));
 }
 

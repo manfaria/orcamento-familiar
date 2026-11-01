@@ -39,7 +39,7 @@ Quem usa esta skill não é necessariamente técnico. Explica sempre o que vais 
 | `scripts/construir_dashboard.py` | Gera `Orcamento_Familiar.html` a partir de `assets/dashboard.html`. |
 | `scripts/enable_banking.py` | Opcional: descarrega movimentos diretamente dos bancos. Ver `references/enable_banking.md`. |
 | `assets/regras_base.csv` | Regras para centenas de comerciantes e serviços portugueses. É copiado para a pasta de trabalho como `regras.csv`. |
-| `references/` | `comunicacao.md`, `config.md`, `regras.md`, `categorias.md`, `identificacao.md`, `otimizacao.md`, `divisao_justa.md`, `agendamento.md`, `enable_banking.md`. Lê cada um quando chegares ao passo correspondente. |
+| `references/` | `comunicacao.md`, `perguntas.md`, `config.md`, `regras.md`, `categorias.md`, `identificacao.md`, `otimizacao.md`, `divisao_justa.md`, `agendamento.md`, `enable_banking.md`. Lê cada um quando chegares ao passo correspondente. |
 
 Todos os scripts recebem `--config CAMINHO/config.json` e trabalham na pasta desse config. Corre-os sempre sem esconder erros e confirma o código de saída.
 
@@ -64,7 +64,7 @@ Se a pasta já tiver `config.json`, estás numa **atualização**: salta para "A
 
 ## Passo 1. Extratos
 
-1. Pede os extratos. O utilizador pode indicar a pasta onde estão (se tiveres acesso ao computador dele) ou anexá-los à conversa. O ideal são **12 meses** de **todas as contas que pagam coisas da família**: conta conjunta, contas pessoais e cartões de crédito. CSV ou Excel são mais fiáveis do que PDF; se o banco permitir exportar, sugere esse formato.
+1. Pede os extratos. O utilizador pode indicar a pasta onde estão (se tiveres acesso ao computador dele) ou anexá-los à conversa. O ideal são **12 meses** de **todas as contas que pagam coisas da família**: conta conjunta, contas pessoais, cartões de crédito e o cartão refeição, se pagar despesas da família. CSV ou Excel são mais fiáveis do que PDF; se o banco permitir exportar, sugere esse formato.
 2. Lista os ficheiros e corre `ler_extratos.py --inspecionar` em cada um. Diz ao utilizador o que encontraste, por ficheiro: banco provável, período e número de movimentos.
 3. Se um ficheiro não for lido corretamente:
    - indica as colunas à mão com `"mapa"` no config (ver `references/config.md`);
@@ -73,17 +73,13 @@ Se a pasta já tiver `config.json`, estás numa **atualização**: salta para "A
 
 ## Passo 2. Contas, pessoas e como se paga o orçamento
 
-Faz estas perguntas (de escolha múltipla, com resposta livre, quando a interface o permitir). Junta as que puderes numa só ronda e adapta ao que já sabes pelos ficheiros:
-
-1. **Quem faz parte do orçamento:** as pessoas que contribuem com dinheiro. Os filhos só entram como categoria de despesa.
-2. **De quem é cada conta e cada ficheiro:** conjunta, pessoal de alguém, ou cartão de crédito de alguém (e qual a conta que o paga).
-3. **Como entra o dinheiro para as despesas da família:** com conta conjunta, que transferências mensais e depósitos entram; sem conta conjunta, quem paga o quê e que acertos fazem; se só há a conjunta, tudo é da família e basta saber de onde vem o dinheiro.
-4. **Despesas da família pagas da conta pessoal:** renda, luz, supermercado, creche… Quais e por quem.
-5. **Ajudas de fora:** pais, avós ou outros que transferem dinheiro, e para que conta.
-6. **Nomes nas transferências:** como aparece o nome de cada pessoa e de quem ajuda (por exemplo "TRF. DE ANA P COSTA"). Ajuda a detetar contribuições.
-7. **Contas que não estão nos extratos:** Revolut, poupança, corretoras. São poupança ou contas de gastos?
-8. **O que não aparece nos extratos:** cartões refeição, cheque-creche, numerário regular, despesas pagas por outros.
-9. Opcional: **rendimento líquido mensal de cada pessoa**, para a divisão proporcional. Se não quiserem dizer, a skill usa os salários que aparecerem nos extratos.
+Lê `references/perguntas.md` e faz as perguntas do perfil da família em rondas curtas (de escolha múltipla, com resposta livre, quando a interface o permitir). Salta o que os ficheiros já respondem. As que nunca podem faltar:
+1. **Pessoas e contas:** quem contribui, de quem é cada conta e cartão, como aparecem os nomes nas transferências.
+2. **Como se paga a família:** conta conjunta ou não, despesas da família pagas de contas pessoais, ajudas de fora.
+3. **Cartão refeição:** existe? Uso individual, nas despesas da família ou misto? Nos dois últimos casos, pede o extrato do cartão.
+4. **O que não passa pelos extratos:** outros benefícios (cheque-creche, seguro de saúde da empresa), despesas pagas por outros, contas fora dos extratos.
+5. **Situações especiais**, só se houver pistas ou a família as indicar: imóvel arrendado, pensão de alimentos, trabalho independente, despesas de trabalho reembolsadas, adiantamentos a amigos, mudanças de vida no período.
+6. **Privacidade dentro da família:** o detalhe dos gastos pessoais fica visível para todos?
 
 Escreve o `config.json` (formato e exemplo em `references/config.md`). Regista as respostas em `decisoes.md`. Depois:
 - Corre `ler_extratos.py --config` e a seguir `verificar.py --config`.
@@ -126,6 +122,7 @@ Escreve o `config.json` (formato e exemplo em `references/config.md`). Regista a
    - **MB WAY e levantamentos grandes.**
    - **Transferências para pessoas fora da família.**
    - **Contas próprias fora da análise.**
+   - **Adiantamentos:** saídas que voltaram com o mesmo valor (lista `adiantamentos`). Confirmados, ficam como tipo `T`.
 5. Regista cada resposta:
    - **Comerciante que se repete:** regra por padrão em `regras.csv`.
    - **Movimento único:** regra com `id_movimento`.
@@ -224,4 +221,5 @@ Para automatizar (descarregar todos os dias e rever as dúvidas uma vez por sema
 - **Reembolsos tratados como rendimento.** Reembolsos de seguros de saúde e devoluções de lojas descontam na categoria onde aconteceram.
 - **Assumir que uma transferência para alguém é despesa**, ou que uma empresa desconhecida é de certo tipo, sem pesquisar e perguntar.
 - **Esconder a saída dos scripts** (`> /dev/null`): uma falha silenciosa produz um dashboard com dados antigos.
-- **Esquecer despesas da família pagas da conta pessoal.** A contribuição dessa pessoa parece menor do que é e a despesa da família também.
+- **Esquecer despesas da família pagas da conta pessoal** ou com o cartão refeição. A contribuição dessa pessoa parece menor do que é e a despesa da família também.
+- **Contar como despesa dinheiro que volta:** adiantamentos a amigos, despesas de trabalho reembolsadas, custos de um imóvel arrendado.

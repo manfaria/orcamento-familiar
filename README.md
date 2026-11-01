@@ -20,13 +20,16 @@ Pensada para famílias em Portugal: lê extratos de bancos portugueses (CSV, Exc
   - aumentos de preço;
   - comissões;
   - despesas anuais para reservar.
-- **Fora das despesas:** rendimentos, poupança, extraordinários, custos fixos e o que não aparece nos extratos (cartão refeição, cheque-creche).
+- **Cartão refeição:** com uso individual, nas despesas da família ou misto. Mostra quanto é carregado, quanto é gasto e que parte paga a família.
+- **Imóveis arrendados:** rendas e custos de cada imóvel, com o resultado por mês, fora das despesas da família.
+- **Fora das despesas:** rendimentos, poupança, extraordinários, adiantamentos reembolsados, custos fixos e o que não aparece nos extratos (cheque-creche, seguro de saúde da empresa, despesas pagas pelos avós).
+- **Privacidade dentro da família:** os gastos pessoais podem aparecer em detalhe, só por categoria ou só pelo total.
 - **Pesquisa de todos os movimentos.**
 - **Botão com um olho:** esconde todos os valores e desfoca as descrições, para partilhar screenshots.
 
 ## Como funciona
 1. **Extratos:** indicas a pasta dos extratos ou anexa-los à conversa.
-2. **Contas:** o Claude pergunta quem tem que contas, se há conta conjunta, de onde vem o dinheiro do orçamento e o que fica fora dos extratos.
+2. **Perfil da família:** o Claude pergunta quem tem que contas, se há conta conjunta, de onde vem o dinheiro do orçamento, se há cartão refeição e como é usado, e o que fica fora dos extratos. Só pergunta pelas situações que se aplicam: imóvel arrendado, pensão de alimentos, trabalho independente, despesas de trabalho reembolsadas, adiantamentos a amigos, mudanças de vida.
 3. **Categorias:** propõe uma categorização e ajusta-a contigo.
 4. **Movimentos desconhecidos:** pesquisa-os e depois pergunta-te, em pequenos lotes.
 5. **Orçamento:** pergunta se tens um orçamento mensal para comparar.
@@ -133,7 +136,7 @@ orcamento-familiar/
 ├── assets/
 │   ├── dashboard.html          modelo do dashboard
 │   └── regras_base.csv         regras para comerciantes portugueses
-├── references/                 comunicação, config, regras, categorias, identificação,
+├── references/                 comunicação, perfil da família, config, regras, categorias, identificação,
 │                               otimização, divisão justa, agendamento, Enable Banking
 ├── docs/dashboard.png          imagem de exemplo (dados fictícios)
 ├── dist/                       zips de instalação (gerados)

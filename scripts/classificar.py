@@ -24,7 +24,7 @@ from pathlib import Path
 import pandas as pd
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from comum import COLS_CLASS, ambito_padrao, chave, conta_por_id, data_pt, ler_config  # noqa: E402
+from comum import COLS_CLASS, REFEICAO_MISTO, ambito_padrao, chave, conta_por_id, data_pt, ler_config  # noqa: E402
 
 SKILL = Path(__file__).resolve().parent.parent
 TRANSF = re.compile(r"\b(?:TRF|TRANSF|TRANSFER[EÊ]NCIA|MB ?WAY|SEPA|ENTRE CONTAS|P/|PARA|DE|RECEBID|EMITID|"
@@ -99,7 +99,9 @@ def detetar_pares(df, contas):
     """Emparelha saídas e entradas do mesmo valor em contas diferentes da família."""
     res = {}
     cartoes = [cid for cid, c in contas.items() if c["tipo"] == "cartao"]
-    cand = df[df.descricao.str.contains(TRANSF) | df.conta.isin(cartoes)]
+    refeicao = [cid for cid, c in contas.items() if c["tipo"] == "refeicao"]
+    # os cartões refeição são carregados pelo empregador, não por contas da família: ficam fora dos pares
+    cand = df[(df.descricao.str.contains(TRANSF) | df.conta.isin(cartoes)) & ~df.conta.isin(refeicao)]
     entradas = defaultdict(list)
     for i, m in cand[cand.valor > 0].iterrows():
         entradas[round(m.valor, 2)].append(i)
@@ -213,8 +215,12 @@ def main(config_path):
                  "ambito": ambito_padrao(conta), "contribuinte": "", "nota": "", "regra": "por identificar"}
         # categorias que são sempre da família, mesmo pagas de contas pessoais (útil sem conta conjunta)
         explicito = c["regra"].startswith("regras.csv") and (por_id.get(m.id) or regra_por_n.get(c["regra"], {})).get("ambito")
-        if c["tipo"] == "D" and conta["tipo"] != "conjunta" and not explicito and c["categoria"] in amb_cat:
+        if c["tipo"] == "D" and conta["tipo"] not in ("conjunta", "refeicao") and not explicito and c["categoria"] in amb_cat:
             c["ambito"] = amb_cat[c["categoria"]]
+        # cartão refeição em uso misto: só as categorias de "ambito_refeicao" passam para a família
+        if c["tipo"] == "D" and conta["tipo"] == "refeicao" and conta.get("uso") == "misto" and not explicito:
+            mapa = conta.get("ambito_refeicao", REFEICAO_MISTO)
+            c["ambito"] = mapa.get(c["categoria"], ambito_padrao(conta))
         out.append({**m.to_dict(), **c})
     res = pd.DataFrame(out)
     # pagamentos de cartão sem extrato do cartão: são despesa (sem detalhe), não podem desaparecer

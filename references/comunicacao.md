@@ -14,7 +14,7 @@ Antes de pedir seja o que for, apresenta o processo numa mensagem curta, adaptad
 > 6. Mostro quanto cada um contribui para a família e sugiro onde dá para poupar.
 > 7. No fim, entrego um dashboard que podem consultar e atualizar todos os meses.
 >
-> **Do que preciso:** os extratos dos últimos 12 meses de todas as contas que pagam despesas da família (conta conjunta, contas pessoais e cartões de crédito). Excel ou CSV são melhores do que PDF.
+> **Do que preciso:** os extratos dos últimos 12 meses de todas as contas que pagam despesas da família (conta conjunta, contas pessoais, cartões de crédito e, se pagar compras da família, o cartão refeição). Excel ou CSV são melhores do que PDF.
 >
 > **Quanto tempo demora:** a primeira vez é a mais demorada, porque há mais perguntas. Nos meses seguintes é rápido, porque guardo as vossas respostas.
 >
