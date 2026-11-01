@@ -48,9 +48,11 @@ A skill segue o padrão aberto [Agent Skills](https://agentskills.io): uma pasta
 | Gemini CLI e Antigravity CLI | Sim, no teu computador | Sim | Ficheiro HTML | Não |
 | Microsoft 365 Copilot (agentes, pré-visualização) | Sim, sem internet | Não | Ficheiro HTML | Não |
 
-**Descarregar:** na [última versão](https://github.com/manfaria/orcamento-familiar/releases/latest) há dois zips:
-- `orcamento-familiar-claude.zip`: para o Claude, que quer a pasta da skill na raiz do zip.
-- `orcamento-familiar.zip`: para o ChatGPT, o Gemini e o Microsoft 365 Copilot, que querem o `SKILL.md` na raiz do zip.
+**Descarregar:** há dois zips na pasta [`dist/`](dist/):
+- [`orcamento-familiar-claude.zip`](https://github.com/manfaria/orcamento-familiar/raw/main/dist/orcamento-familiar-claude.zip): para o Claude, que quer a pasta da skill na raiz do zip.
+- [`orcamento-familiar.zip`](https://github.com/manfaria/orcamento-familiar/raw/main/dist/orcamento-familiar.zip): para o ChatGPT, o Gemini e o Microsoft 365 Copilot, que querem o `SKILL.md` na raiz do zip.
+
+Não uses o "Download ZIP" do GitHub: cria uma pasta `orcamento-familiar-main` na raiz, que não serve a nenhuma das plataformas.
 
 **Requisitos dos scripts:** Python 3.9 ou superior com `pandas` e `openpyxl`. Para ficheiros `.xls` é preciso `xlrd` e para PDF é preciso `pdfplumber`. A ligação automática aos bancos precisa de `pyjwt`, `cryptography` e `requests`, e só corre no teu computador.
 
@@ -133,10 +135,14 @@ orcamento-familiar/
 │   └── regras_base.csv         regras para comerciantes portugueses
 ├── references/                 comunicação, config, regras, categorias, identificação,
 │                               otimização, divisão justa, agendamento, Enable Banking
-└── docs/dashboard.png          imagem de exemplo (dados fictícios)
+├── docs/dashboard.png          imagem de exemplo (dados fictícios)
+├── dist/                       zips de instalação (gerados)
+└── tools/empacotar.py          gera os zips de dist/
 ```
 
 ## Contribuir
+Depois de mudar a skill, corre `python tools/empacotar.py` para gerar de novo os zips de `dist/`.
+
 Sugestões bem-vindas, sobretudo:
 - **Regras para comerciantes** que faltem em `assets/regras_base.csv`.
 - **Formatos de extrato** de bancos portugueses que o leitor não perceba à primeira. Envia um exemplo com dados inventados, nunca um extrato real.
