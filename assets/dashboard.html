@@ -1,0 +1,737 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Orçamento Familiar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Orçamento Familiar: filtro fixo no topo; resumo → em quê → por mês → orçamento → contribuições → sugestões → contas à parte → movimentos. */
+:root {
+  --bg: #f3f5f4; --surface: #fcfdfc; --ink: #111816; --ink-2: #4a5552; --muted: #76817e; --line: #dfe5e2; --axis: #c3cbc8;
+  --accent: #1f6fcf; --accent-wash: rgba(31,111,207,.10);
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #4a3aa7; --s-other: #a9b2af;
+  --seq-0: #eef4fc; --seq-1: #cde2fb; --seq-2: #9ec5f4; --seq-3: #6da7ec;
+  --good: #006300; --bad: #c03232; --warn-bg: #fff4dc; --warn-ink: #7a4b00;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Public Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --r: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f1211; --surface: #181c1b; --ink: #f2f5f4; --ink-2: #c0c9c6; --muted: #8b9693; --line: #2a302e; --axis: #3a423f;
+    --accent: #5b9ff0; --accent-wash: rgba(91,159,240,.14);
+    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s-other: #59625f;
+    --seq-0: #1b2330; --seq-1: #1d3352; --seq-2: #1c4a80; --seq-3: #2a63ad;
+    --good: #2fbf2f; --bad: #ff7a7a; --warn-bg: #3a2e12; --warn-ink: #f6cf7a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f1211; --surface: #181c1b; --ink: #f2f5f4; --ink-2: #c0c9c6; --muted: #8b9693; --line: #2a302e; --axis: #3a423f;
+  --accent: #5b9ff0; --accent-wash: rgba(91,159,240,.14);
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #008300; --s7: #9085e9; --s-other: #59625f;
+  --seq-0: #1b2330; --seq-1: #1d3352; --seq-2: #1c4a80; --seq-3: #2a63ad;
+  --good: #2fbf2f; --bad: #ff7a7a; --warn-bg: #3a2e12; --warn-ink: #f6cf7a;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.5; padding-inline: 16px; padding-block: 0 48px; }
+.wrap { max-width: 1160px; margin: 0 auto; display: flex; flex-direction: column; gap: 36px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; letter-spacing: -0.01em; }
+h1 { font-size: clamp(28px, 4.2vw, 40px); font-weight: 700; }
+h2 { font-size: 22px; font-weight: 600; }
+h3 { font-size: 16px; font-weight: 600; font-family: var(--font-body); letter-spacing: 0; }
+p { margin: 0; }
+.lede { color: var(--ink-2); max-width: 72ch; }
+.eyebrow { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); font-weight: 600; }
+.small { font-size: 13px; color: var(--ink-2); }
+.muted { color: var(--muted); }
+.num { font-variant-numeric: tabular-nums; }
+header.top { padding-top: 28px; display: flex; flex-direction: column; gap: 10px; }
+.sources { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 3px 10px; font-size: 12.5px; color: var(--ink-2); }
+.chip b { color: var(--ink); font-weight: 600; }
+.filterbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(6px); padding-block: 10px; margin-inline: -16px; padding-inline: 16px; border-bottom: 1px solid var(--line); }
+.filterbar .in { max-width: 1160px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; background: var(--surface); padding: 3px; gap: 2px; flex-wrap: wrap; }
+.seg button { font: inherit; font-size: 13.5px; border: 0; background: transparent; color: var(--ink-2); padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: var(--surface); font-weight: 600; }
+.eye { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; font: inherit; font-size: 13.5px; color: var(--ink-2); background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 6px 14px 6px 11px; cursor: pointer; }
+.eye svg { width: 18px; height: 18px; flex: none; }
+.eye .ic-off, .eye[aria-pressed="true"] .ic-on { display: none; }
+.eye[aria-pressed="true"] .ic-off { display: block; }
+.eye:hover { color: var(--ink); }
+.eye[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); font-weight: 600; }
+@media (max-width: 520px) { .eye .lbl { display: none; } .eye { padding: 7px 9px; } }
+button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.privacy .desc, .privacy .txmini .t, .privacy .q .t { filter: blur(5px); }
+.kpis { display: grid; grid-template-columns: 1.4fr repeat(var(--n, 3), 1fr); gap: 12px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 16px 18px; display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.tile .label { font-size: 13px; color: var(--ink-2); }
+.tile .value { font-size: 28px; font-weight: 600; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+.tile.hero .value { font-size: 48px; line-height: 1.05; }
+.tile .sub { font-size: 12.5px; color: var(--muted); }
+.spark { height: 34px; width: 100%; margin-top: 6px; }
+section { display: flex; flex-direction: column; gap: 14px; }
+section[hidden] { display: none; }
+.sec-head { display: flex; flex-direction: column; gap: 4px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; min-width: 0; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.catlist { display: flex; flex-direction: column; gap: 2px; }
+.catrow { display: grid; grid-template-columns: minmax(0, 15.5em) 1fr 6.5em; align-items: center; gap: 10px; padding: 6px 8px; border-radius: 8px; border: 0; background: transparent; font: inherit; color: inherit; text-align: left; cursor: pointer; width: 100%; }
+.catrow:hover { background: var(--accent-wash); }
+.catrow[aria-pressed="true"] { background: var(--accent-wash); box-shadow: inset 0 0 0 1px var(--accent); }
+.catrow .nm { font-size: 14px; line-height: 1.3; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.catrow .nm i { width: 10px; height: 10px; border-radius: 3px; flex: none; }
+.track { height: 14px; position: relative; }
+.bar { position: absolute; left: 0; top: 0; bottom: 0; background: var(--s1); border-radius: 0 4px 4px 0; min-width: 2px; }
+.bar.neg { background: var(--good); }
+.catrow .v { text-align: right; font-variant-numeric: tabular-nums; font-size: 14px; font-weight: 600; }
+.sublist { display: flex; flex-direction: column; gap: 6px; margin-top: 12px; }
+.subrow { display: grid; grid-template-columns: minmax(0, 1fr) 6em 4.5em; gap: 8px; font-size: 13.5px; align-items: baseline; }
+.subrow .v { text-align: right; font-variant-numeric: tabular-nums; }
+.subrow .p { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12.5px; }
+.txmini { margin-top: 16px; border-top: 1px solid var(--line); padding-top: 12px; display: flex; flex-direction: column; gap: 4px; max-height: 340px; overflow: auto; }
+.txmini .r { display: grid; grid-template-columns: 5.6em minmax(0, 1fr) 6.2em; gap: 8px; font-size: 13px; }
+.txmini .r .d { color: var(--muted); font-variant-numeric: tabular-nums; }
+.txmini .r .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.txmini .r .v { text-align: right; font-variant-numeric: tabular-nums; }
+.pos { color: var(--good); }
+.neg-txt { color: var(--bad); }
+.chart { width: 100%; position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart text { fill: var(--muted); font-family: var(--font-body); font-size: 11.5px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; box-shadow: 0 6px 20px rgba(0,0,0,.12); min-width: 190px; z-index: 5; }
+.tip[hidden] { display: none; }
+.tip .h { font-weight: 600; margin-bottom: 4px; color: var(--ink); }
+.tip .row { display: grid; grid-template-columns: 14px 1fr auto; gap: 6px; align-items: center; color: var(--ink-2); }
+.tip .row b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.tip .row i { height: 2px; width: 12px; display: block; border-radius: 2px; }
+.tip .tot { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 4px; display: flex; justify-content: space-between; font-weight: 600; color: var(--ink); }
+.tscroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { padding: 6px 8px; text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+th { font-weight: 600; color: var(--ink-2); font-size: 12px; border-bottom: 1px solid var(--axis); background: var(--surface); }
+td:first-child, th:first-child { text-align: left; }
+tbody tr { border-bottom: 1px solid var(--line); }
+tfoot td { font-weight: 700; border-top: 1px solid var(--axis); }
+.heat td.c { color: var(--ink); }
+.heat td.avg { font-weight: 700; }
+.heat td.dim { color: var(--muted); }
+td.up { color: var(--bad); } td.dn { color: var(--good); }
+td.note, th.note { text-align: left; white-space: normal; min-width: 16em; color: var(--ink-2); font-size: 12.5px; }
+td.rowname { white-space: normal; min-width: 10em; }
+tr.rest td { color: var(--ink-2); font-style: italic; }
+tr.hl td { background: var(--accent-wash); }
+.callout { background: var(--warn-bg); color: var(--warn-ink); border-radius: var(--r); padding: 12px 14px; font-size: 13.5px; }
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 12px; }
+.facts .card { display: flex; flex-direction: column; gap: 8px; }
+.kv { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 12px; font-size: 13.5px; }
+.kv .v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.kv .lbl { color: var(--ink-2); }
+.kv .tot { border-top: 1px solid var(--line); padding-top: 4px; font-weight: 700; color: var(--ink); }
+.sug { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+.sug .card { display: flex; flex-direction: column; gap: 6px; }
+.sug .gain { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--good); }
+.qlist { display: flex; flex-direction: column; }
+.q { display: grid; grid-template-columns: 6em minmax(0, 1fr) 6.5em; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13.5px; align-items: baseline; }
+.q .d { color: var(--muted); font-variant-numeric: tabular-nums; }
+.q .v { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; }
+.q .why { grid-column: 2 / 4; color: var(--ink-2); font-size: 12.5px; }
+.tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+input[type="search"], select { font: inherit; font-size: 14px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); min-width: 0; }
+input[type="search"] { flex: 1 1 220px; }
+.txtable td.desc { text-align: left; white-space: normal; min-width: 16em; }
+.txtable td.cat { text-align: left; color: var(--ink-2); white-space: normal; min-width: 10em; }
+.badge { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--ink-2); }
+footer { color: var(--muted); font-size: 12.5px; display: flex; flex-direction: column; gap: 6px; }
+@media (max-width: 860px) {
+  .kpis { grid-template-columns: 1fr 1fr; }
+  .kpis .hero { grid-column: 1 / -1; }
+  .grid2 { grid-template-columns: 1fr; }
+}
+@media (max-width: 520px) {
+  .catrow { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "nm v" "tr tr"; gap: 4px 8px; }
+  .catrow .nm { grid-area: nm; } .catrow .v { grid-area: v; } .catrow .track { grid-area: tr; height: 10px; }
+  .tile.hero .value { font-size: 40px; }
+  .q { grid-template-columns: 5em minmax(0, 1fr) 5.8em; }
+}
+@media (prefers-reduced-motion: no-preference) { .bar { transition: width .25s ease; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow" id="eyebrow"></span>
+    <h1 id="titulo">Orçamento Familiar</h1>
+    <p class="lede" id="lede"></p>
+    <div class="sources" id="sources"></div>
+  </header>
+
+  <div class="filterbar"><div class="in">
+    <span class="eyebrow">Ver</span>
+    <div class="seg" role="group" aria-label="Âmbito" id="seg"></div>
+    <button type="button" id="eye" class="eye" aria-pressed="false" aria-label="Esconder valores" title="Esconder valores">
+      <svg class="ic-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+      <svg class="ic-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a10.4 10.4 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="M3 3l18 18"/></svg>
+      <span class="lbl">Esconder valores</span>
+    </button>
+  </div></div>
+
+  <section aria-label="Resumo"><div class="kpis" id="kpis"></div></section>
+
+  <section aria-labelledby="h-cat">
+    <div class="sec-head"><h2 id="h-cat">Em quê: média mensal por categoria</h2>
+      <p class="small">Escolhe uma categoria para ver as subcategorias, quem paga e os maiores movimentos.</p></div>
+    <div class="grid2">
+      <div class="card"><div class="catlist" id="catlist"></div></div>
+      <div class="card" id="detail"></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-mes">
+    <div class="sec-head"><h2 id="h-mes">Por mês</h2><p class="small" id="mnote"></p></div>
+    <div class="card"><div class="legend" id="mlegend"></div><div class="chart" id="mchart" style="margin-top:10px"></div></div>
+    <div class="card tscroll"><table class="heat" id="heat"></table><p class="small" id="heatnote" style="margin-top:8px"></p></div>
+  </section>
+
+  <section aria-labelledby="h-orc" id="sec-orc">
+    <div class="sec-head"><h2 id="h-orc">Orçamento: planeado vs real</h2><p class="small" id="orcnote"></p></div>
+    <div class="card tscroll"><table id="orc"></table></div>
+  </section>
+
+  <section aria-labelledby="h-con" id="sec-con">
+    <div class="sec-head"><h2 id="h-con">Contribuições para a família</h2><p class="small" id="connote"></p></div>
+    <div class="kpis" id="contiles"></div>
+    <div class="card"><div class="legend" id="clegend"></div><div class="chart" id="cchart" style="margin-top:10px"></div></div>
+    <div class="card tscroll"><table id="ctable"></table></div>
+  </section>
+
+  <section aria-labelledby="h-div" id="sec-div">
+    <div class="sec-head"><h2 id="h-div">Divisão justa</h2><p class="small" id="divnote"></p></div>
+    <div class="card tscroll"><table id="dtable"></table></div>
+  </section>
+
+  <section aria-labelledby="h-sug" id="sec-sug">
+    <div class="sec-head"><h2 id="h-sug">Sugestões de otimização</h2>
+      <p class="small">Baseadas apenas nos movimentos dos extratos. Não são aconselhamento financeiro.</p></div>
+    <div class="sug" id="sug"></div>
+  </section>
+
+  <section aria-labelledby="h-out">
+    <div class="sec-head"><h2 id="h-out">Fora das despesas</h2>
+      <p class="small">Rendimentos, poupança, extraordinários, custos fixos e o que não aparece nos extratos.</p></div>
+    <div class="facts" id="facts"></div>
+  </section>
+
+  <section aria-labelledby="h-q" id="sec-q">
+    <div class="sec-head"><h2 id="h-q">Por identificar</h2>
+      <p class="small">Movimentos que ainda não foi possível classificar. Contam como despesa na categoria "Por identificar".</p></div>
+    <div class="card"><div class="qlist" id="qlist"></div></div>
+  </section>
+
+  <section aria-labelledby="h-tx">
+    <div class="sec-head"><h2 id="h-tx">Todos os movimentos</h2></div>
+    <div class="card">
+      <div class="tools">
+        <input type="search" id="q" placeholder="Procurar descrição, categoria ou nota" aria-label="Procurar">
+        <select id="fcat" aria-label="Categoria"></select>
+        <select id="ftipo" aria-label="Tipo"></select>
+        <span class="small num" id="txsum"></span>
+      </div>
+      <div class="tscroll" style="margin-top:10px;max-height:560px;overflow:auto"><table class="txtable" id="txt"></table></div>
+    </div>
+  </section>
+
+  <footer id="footer"></footer>
+</div>
+
+<script>
+const DATA = /*__DATA__*/null;
+
+/* ---------- dados ---------- */
+const C = Object.fromEntries(DATA.contas.map(c => [c.id, c]));
+const PESSOAS = DATA.pessoas || [];
+const EXT = DATA.externos || [];
+const NOME = Object.fromEntries([...PESSOAS, ...EXT].map(p => [p.id, p.nome]));
+const nomeDe = id => NOME[id] || id;
+const tx = DATA.tx.map(r => ({d: r[0], m: r[0].slice(0, 7), c: r[1], a: r[2], t: r[3], cat: r[4], sub: r[5], v: r[6], desc: r[7], n: r[8] || '', ct: r[9] || '', id: r[10]}));
+const MESES = DATA.meses;
+const JANELA = DATA.janela || [];
+const MN = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const mCurto = m => MN[+m.slice(5) - 1];
+const mLongo = m => MN[+m.slice(5) - 1] + '/' + m.slice(2, 4);
+const TIPO = {D: 'Despesa', R: 'Rendimento', T: 'Transferência', C: 'Pag. cartão', P: 'Poupança', X: 'Extraordinário'};
+const PESSOAS_VISTA = PESSOAS.filter(p => DATA.tx.some(r => r[2] === p.id));   // só pessoas com gastos pessoais nos extratos
+const SCOPES = ['familia', ...PESSOAS_VISTA.map(p => p.id)];
+const scopeLbl = s => s === 'all' ? 'tudo' : s === 'familia' ? 'família' : nomeDe(s);
+
+/* ---------- formatos e modo privado ---------- */
+const eur = new Intl.NumberFormat('pt-PT', {style: 'currency', currency: 'EUR', minimumFractionDigits: 2, maximumFractionDigits: 2});
+const eur0 = new Intl.NumberFormat('pt-PT', {style: 'currency', currency: 'EUR', maximumFractionDigits: 0});
+const n0 = new Intl.NumberFormat('pt-PT', {maximumFractionDigits: 0});
+let privacy = false;
+try { privacy = localStorage.getItem('orcamento-privacy') === '1'; } catch (e) {}
+const MASK = '••• €';
+const z = v => Math.abs(v) < 0.005 ? 0 : v;
+const fmt = v => privacy ? MASK : eur.format(z(v));
+const fmt0 = v => privacy ? MASK : eur0.format(z(v));
+const nf = v => privacy ? '•••' : n0.format(z(v));
+const pct = (a, b) => privacy ? '••%' : (b ? Math.round(a / b * 100) : 0) + '%';
+const dfmt = d => d.slice(8, 10) + '/' + d.slice(5, 7) + '/' + d.slice(2, 4);
+
+/* ---------- âmbito e médias ---------- */
+let scope = 'all', selCat = null;
+try { const s = localStorage.getItem('orcamento-scope'); if (s === 'all' || SCOPES.includes(s)) scope = s; } catch (e) {}
+const inScope = t => scope === 'all' || t.a === scope;
+const expenses = () => tx.filter(t => t.t === 'D' && inScope(t));
+const sum = a => a.reduce((s, t) => s + t.v, 0);
+const spend = a => -sum(a);
+const avgOf = a => a.reduce((s, t) => s + (-t.v) / C[t.c].meses, 0);
+const ultimoDia = m => { const [y, mo] = m.split('-').map(Number); return m + '-' + String(new Date(y, mo, 0).getDate()).padStart(2, '0'); };
+const cobre = (c, m) => c.inicio <= m + '-01' && c.fim >= ultimoDia(m);
+const contasDoScope = s => (s === 'all' || s === 'familia') ? DATA.contas : DATA.contas.filter(c => c.tipo !== 'conjunta' && (c.titulares || []).includes(s));
+const parcial = (s, m) => contasDoScope(s).some(c => !cobre(c, m));
+function byMonth(a) { const o = {}; MESES.forEach(m => o[m] = 0); a.forEach(t => { if (t.m in o) o[t.m] += -t.v; }); return o; }
+function byCatAvg(a) { const o = {}; a.forEach(t => { o[t.cat] = (o[t.cat] || 0) + (-t.v) / C[t.c].meses; }); return o; }
+function byCatSum(a) { const o = {}; a.forEach(t => { o[t.cat] = (o[t.cat] || 0) - t.v; }); return o; }
+const TOPCATS = Object.entries(byCatAvg(tx.filter(t => t.t === 'D' && t.cat !== 'Por identificar'))).sort((a, b) => b[1] - a[1]).slice(0, 7).map(x => x[0]);
+const colOf = c => TOPCATS.includes(c) ? `var(--s${TOPCATS.indexOf(c) + 1})` : 'var(--s-other)';
+
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') e.className = v; else if (k === 'style') e.setAttribute('style', v); else if (k === 'text') e.textContent = v; else e.setAttribute(k, v);
+  }
+  for (const k of kids) if (k != null) e.append(k);
+  return e;
+}
+
+/* ---------- cabeçalho ---------- */
+function renderHeader() {
+  const d0 = MESES[0], d1 = MESES[MESES.length - 1];
+  document.getElementById('eyebrow').textContent = `Extratos de ${MESES.length} meses · ${mLongo(d0)} a ${mLongo(d1)}`;
+  if (DATA.familia) document.getElementById('titulo').textContent = 'Orçamento Familiar · ' + DATA.familia;
+  const nc = DATA.contas.length;
+  document.getElementById('lede').textContent = `Quanto gastamos por mês e em quê, a partir dos extratos de ${nc} ${nc === 1 ? 'conta' : 'contas'}. Cada conta é dividida pelos meses que o seu extrato cobre. As transferências entre contas, os pagamentos do cartão, a poupança e os gastos extraordinários ficam fora das despesas e aparecem em secções próprias.`;
+  const box = document.getElementById('sources');
+  DATA.contas.forEach(c => box.append(el('span', {class: 'chip'}, el('b', {text: c.banco || c.nome}), document.createTextNode(`${c.nome} · ${dfmt(c.inicio)}–${dfmt(c.fim)}`))));
+  const seg = document.getElementById('seg');
+  [['all', 'Tudo'], ['familia', 'Família'], ...PESSOAS_VISTA.map(p => [p.id, p.nome + ' (pessoal)'])].forEach(([id, lbl]) => {
+    const b = el('button', {type: 'button', 'data-scope': id, 'aria-pressed': 'false', text: lbl});
+    b.addEventListener('click', () => { scope = id; selCat = null; try { localStorage.setItem('orcamento-scope', scope); } catch (e) {} renderScoped(); });
+    seg.append(b);
+  });
+}
+
+/* ---------- KPIs ---------- */
+function sparkSVG(vals) {
+  if (vals.length < 2) return '';
+  const w = 200, h = 34, max = Math.max(...vals);
+  const x = i => i * (w / (vals.length - 1)), y = v => h - 3 - v / (max || 1) * (h - 8);
+  const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ');
+  const area = `M0,${h} L` + vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' L') + ` L${w},${h} Z`;
+  const l = vals.length - 1;
+  return `<svg class="spark" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" aria-hidden="true"><path d="${area}" fill="var(--s1)" opacity=".10"/><polyline points="${pts}" fill="none" stroke="var(--s1)" stroke-width="2" stroke-linejoin="round" vector-effect="non-scaling-stroke"/><circle cx="${x(l)}" cy="${y(vals[l])}" r="3" fill="var(--s1)"/></svg>`;
+}
+const scopeAvg = s => avgOf(tx.filter(t => t.t === 'D' && t.a === s));
+function tile(box, l, v, s, cls = '') { box.append(el('div', {class: 'tile ' + cls}, el('span', {class: 'label', text: l}), el('span', {class: 'value', text: v}), el('span', {class: 'sub', text: s}))); }
+function renderKPIs() {
+  const box = document.getElementById('kpis'); box.replaceChildren();
+  const E = expenses(), avg = avgOf(E), bm = byMonth(E);
+  const full = MESES.filter(m => !parcial(scope, m));
+  const hero = el('div', {class: 'tile hero'});
+  hero.innerHTML = `<span class="label"></span><span class="value"></span><span class="sub"></span>${sparkSVG(full.map(m => bm[m]))}`;
+  hero.querySelector('.label').textContent = scope === 'all' ? 'Despesa média por mês' : `Despesa média por mês · ${scopeLbl(scope)}`;
+  hero.querySelector('.value').textContent = fmt0(avg);
+  hero.querySelector('.sub').textContent = scope === 'all' ? 'família e despesas pessoais · cada conta pelos seus meses' : `${fmt0(spend(E))} no período · evolução nos meses completos`;
+  box.append(hero);
+  const total = SCOPES.reduce((s, sc) => s + scopeAvg(sc), 0);
+  if (scope === 'all') {
+    box.style.setProperty('--n', Math.min(3, SCOPES.length));
+    tile(box, 'Família', fmt0(scopeAvg('familia')), 'por mês · despesas da casa, pagas por qualquer conta');
+    PESSOAS_VISTA.forEach(p => tile(box, `${p.nome} (pessoal)`, fmt0(scopeAvg(p.id)), 'por mês · gastos pessoais'));
+  } else {
+    box.style.setProperty('--n', 3);
+    let mx = full[0], mn = full[0];
+    full.forEach(m => { if (bm[m] > bm[mx]) mx = m; if (bm[m] < bm[mn]) mn = m; });
+    tile(box, 'Mês mais alto', mx ? fmt0(bm[mx]) : '–', mx ? mLongo(mx) : '');
+    tile(box, 'Mês mais baixo', mn ? fmt0(bm[mn]) : '–', mn ? mLongo(mn) : '');
+    tile(box, 'Peso no total', pct(avg, total), 'da despesa média mensal');
+  }
+}
+
+/* ---------- categorias ---------- */
+function renderCats() {
+  const box = document.getElementById('catlist'); box.replaceChildren();
+  const bc = byCatAvg(expenses());
+  const cats = Object.entries(bc).filter(([, v]) => Math.abs(v) > 0.005).sort((a, b) => b[1] - a[1]);
+  if (!cats.length) { box.append(el('p', {class: 'small', text: 'Sem despesas neste âmbito.'})); return; }
+  if (!selCat || !bc[selCat]) selCat = cats[0][0];
+  const max = Math.max(...cats.map(c => Math.abs(c[1])));
+  cats.forEach(([c, v]) => {
+    const b = el('button', {type: 'button', class: 'catrow', 'aria-pressed': String(c === selCat)});
+    const nm = el('span', {class: 'nm'}); const sw = el('i'); sw.style.background = colOf(c); nm.append(sw, document.createTextNode(c));
+    const tr = el('span', {class: 'track'}); const bar = el('span', {class: 'bar' + (v < 0 ? ' neg' : '')}); bar.style.width = (Math.abs(v) / max * 100).toFixed(1) + '%'; tr.append(bar);
+    b.append(nm, tr, el('span', {class: 'v', text: fmt(v)}));
+    b.addEventListener('click', () => { selCat = c; renderCats(); renderDetail(); });
+    box.append(b);
+  });
+}
+function renderDetail() {
+  const box = document.getElementById('detail'); box.replaceChildren();
+  if (!selCat) return;
+  const E = expenses().filter(t => t.cat === selCat);
+  box.append(el('span', {class: 'eyebrow', text: 'Categoria'}), el('h3', {text: selCat}));
+  box.append(el('p', {class: 'small num', text: `${fmt(avgOf(E))} por mês · ${fmt(spend(E))} no período · ${E.length} movimentos`}));
+  if (DATA.notas_categorias && DATA.notas_categorias[selCat]) box.append(el('p', {class: 'small', style: 'margin-top:8px', text: DATA.notas_categorias[selCat]}));
+  const subs = {}, subt = {};
+  E.forEach(t => { const k = t.sub || '(sem subcategoria)'; subs[k] = (subs[k] || 0) + (-t.v) / C[t.c].meses; subt[k] = (subt[k] || 0) - t.v; });
+  const sl = el('div', {class: 'sublist'});
+  sl.append(el('div', {class: 'subrow small muted'}, el('span', {text: 'Subcategoria'}), el('span', {class: 'v', text: 'por mês'}), el('span', {class: 'p', text: 'no período'})));
+  Object.entries(subs).sort((a, b) => b[1] - a[1]).forEach(([s, v]) => sl.append(el('div', {class: 'subrow'}, el('span', {text: s}), el('span', {class: 'v' + (v < 0 ? ' pos' : ''), text: fmt(v)}), el('span', {class: 'p', text: fmt0(subt[s])}))));
+  if (scope === 'all' || scope === 'familia') {
+    const per = {}; E.forEach(t => { per[t.c] = (per[t.c] || 0) + (-t.v) / C[t.c].meses; });
+    const who = Object.entries(per).filter(([, v]) => Math.abs(v) > 0.5).sort((a, b) => b[1] - a[1]).map(([c, v]) => `${C[c].nome} ${fmt0(v)}`).join(' · ');
+    if (who) sl.append(el('p', {class: 'small', style: 'margin-top:6px', text: 'Quem paga, por mês: ' + who}));
+  }
+  box.append(sl);
+  const tm = el('div', {class: 'txmini'}); tm.append(el('div', {class: 'small muted', text: 'Maiores movimentos'}));
+  [...E].sort((a, b) => a.v - b.v).slice(0, 40).forEach(t => tm.append(el('div', {class: 'r'}, el('span', {class: 'd', text: dfmt(t.d)}), el('span', {class: 't', title: `${t.desc} · ${C[t.c].nome}${t.n ? ' · ' + t.n : ''}`, text: t.n ? `${t.n} (${t.desc})` : t.desc}), el('span', {class: 'v' + (t.v > 0 ? ' pos' : ''), text: fmt(-t.v)}))));
+  box.append(tm);
+}
+
+/* ---------- gráficos ---------- */
+function niceMax(v) { const p = Math.pow(10, Math.floor(Math.log10(v))); const f = v / p; return [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].find(x => x >= f) * p; }
+function stackChart(host, cols, colorFn, tipFn, opts = {}) {
+  host.replaceChildren();
+  const W = Math.max(320, host.clientWidth || 700), H = opts.h || 280, ml = 52, mr = 8, mt = 12, mb = 40;
+  const pw = W - ml - mr, ph = H - mt - mb;
+  const maxV = niceMax(Math.max(1, ...cols.map(c => c.total)));
+  const yv = v => mt + ph - (v / maxV) * ph;
+  const SV = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(SV, 'svg'); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('role', 'img'); svg.setAttribute('aria-label', opts.label || 'Gráfico');
+  const mk = (t, a) => { const e = document.createElementNS(SV, t); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  for (let i = 0; i <= 4; i++) { const v = maxV / 4 * i, y = yv(v);
+    svg.append(mk('line', {x1: ml, x2: W - mr, y1: y, y2: y, stroke: i === 0 ? 'var(--axis)' : 'var(--line)', 'stroke-width': 1}));
+    const t_ = mk('text', {x: ml - 8, y: y + 4, 'text-anchor': 'end'}); t_.textContent = nf(v); svg.append(t_); }
+  const band = pw / cols.length, bw = Math.min(opts.bw || 30, band * 0.62);
+  const hl = mk('rect', {x: 0, y: mt, width: band, height: ph, fill: 'var(--accent-wash)', opacity: 0, 'pointer-events': 'none'}); svg.append(hl);
+  const tip = el('div', {class: 'tip'}); tip.hidden = true;
+  const every = Math.ceil(cols.length / Math.max(1, Math.floor(pw / 34)));
+  cols.forEach((c, i) => {
+    const cx = ml + band * i + band / 2;
+    if (i % every === 0) {
+      const lab = mk('text', {x: cx, y: mt + ph + 16, 'text-anchor': 'middle'}); lab.textContent = c.label; svg.append(lab);
+      if (c.note) { const nt = mk('text', {x: cx, y: mt + ph + 30, 'text-anchor': 'middle', 'font-size': '10'}); nt.textContent = c.note; svg.append(nt); }
+    }
+    const g = mk('g', {opacity: c.dim ? .45 : 1}); svg.append(g);
+    let acc = 0; const parts = c.parts.filter(p => p.v > 0);
+    parts.forEach((p, j) => { const y0 = yv(acc), y1 = yv(acc + p.v); acc += p.v; const top = j === parts.length - 1;
+      const x = cx - bw / 2, hgt = Math.max(0, y0 - y1 - (j > 0 ? 2 : 0)), y = y1;
+      if (hgt <= 0) return; const r = top ? Math.min(4, hgt / 2) : 0;
+      g.append(mk('path', {d: `M${x},${y + hgt} V${y + r} Q${x},${y} ${x + r},${y} H${x + bw - r} Q${x + bw},${y} ${x + bw},${y + r} V${y + hgt} Z`, fill: colorFn(p.k)})); });
+    if (c.line != null) { const y = yv(c.line); svg.append(mk('line', {x1: cx - bw / 2 - 4, x2: cx + bw / 2 + 4, y1: y, y2: y, stroke: 'var(--ink)', 'stroke-width': 2, 'stroke-linecap': 'round'})); }
+    const hit = mk('rect', {x: ml + band * i, y: mt, width: band, height: ph, fill: 'transparent', tabindex: 0, 'aria-label': `${c.title || c.label}: ${fmt(c.total)}`});
+    const show = () => { tip.hidden = false; tip.replaceChildren(...tipFn(c)); const r = host.getBoundingClientRect(); let x = (cx / W) * r.width + 12; if (x + 210 > r.width) x = (cx / W) * r.width - 222; tip.style.left = Math.max(0, x) + 'px'; tip.style.top = '8px'; hl.setAttribute('x', ml + band * i); hl.setAttribute('opacity', 1); };
+    const hide = () => { tip.hidden = true; hl.setAttribute('opacity', 0); };
+    hit.addEventListener('pointerenter', show); hit.addEventListener('pointerleave', hide); hit.addEventListener('focus', show); hit.addEventListener('blur', hide);
+    svg.append(hit);
+  });
+  host.append(svg, tip);
+}
+function tipRows(title, rows, total, extra) {
+  const out = [el('div', {class: 'h', text: title})];
+  rows.forEach(([name, color, v]) => { const i = el('i'); i.style.background = color; out.push(el('div', {class: 'row'}, i, el('span', {text: name}), el('b', {text: fmt(v)}))); });
+  if (total != null) out.push(el('div', {class: 'tot'}, el('span', {text: 'Total'}), el('span', {class: 'num', text: fmt(total)})));
+  if (extra) out.push(el('div', {class: 'small muted', style: 'margin-top:4px', text: extra}));
+  return out;
+}
+function legend(id, items) { const leg = document.getElementById(id); leg.replaceChildren(); items.forEach(([k, col]) => { const i = el('i'); i.style.background = col; leg.append(el('span', {}, i, document.createTextNode(k))); }); }
+const yearNote = (m, i) => (i === 0 || m.endsWith('-01')) ? m.slice(0, 4) : '';
+
+function renderMonthly() {
+  const E = expenses(); const present = new Set(E.map(t => t.cat));
+  const order = [...TOPCATS.filter(c => present.has(c)), 'Outras'];
+  legend('mlegend', order.map(k => [k, k === 'Outras' ? 'var(--s-other)' : colOf(k)]));
+  const cols = MESES.map((m, i) => {
+    const a = E.filter(t => t.m === m), bc = byCatSum(a);
+    const parts = order.map(k => ({k, v: k === 'Outras' ? Object.entries(bc).filter(([c]) => !TOPCATS.includes(c)).reduce((s, [, v]) => s + v, 0) : (bc[k] || 0)}));
+    const dim = parcial(scope, m);
+    return {label: mCurto(m) + (dim ? '*' : ''), title: mLongo(m), m, parts, total: spend(a), dim, note: yearNote(m, i)};
+  });
+  stackChart(document.getElementById('mchart'), cols, k => k === 'Outras' ? 'var(--s-other)' : colOf(k),
+    c => tipRows(mLongo(c.m), [...c.parts].reverse().filter(p => Math.abs(p.v) > 0.005).map(p => [p.k, p.k === 'Outras' ? 'var(--s-other)' : colOf(p.k), p.v]), c.total, c.dim ? 'Mês incompleto: nem todas as contas têm extrato do mês inteiro.' : null),
+    {label: 'Despesa mensal por categoria', bw: 30});
+  const np = MESES.filter(m => parcial(scope, m));
+  document.getElementById('mnote').textContent = 'Total gasto em cada mês, por categoria.' + (np.length ? ` Os meses com * aparecem mais claros porque nem todas as contas têm extrato do mês inteiro (${np.map(mLongo).join(', ')}).` : '');
+}
+function renderHeat() {
+  const t = document.getElementById('heat'); t.replaceChildren();
+  const E = expenses(), bc = byCatAvg(E);
+  const full = MESES.filter(m => !parcial(scope, m));
+  const cats = Object.entries(bc).filter(([, v]) => Math.abs(v) > 0.005).sort((a, b) => b[1] - a[1]).map(x => x[0]);
+  const th = el('thead'), hr = el('tr'); hr.append(el('th', {text: 'Categoria'}));
+  MESES.forEach(m => hr.append(el('th', {text: mCurto(m) + (parcial(scope, m) ? '*' : ''), title: mLongo(m)})));
+  ['Média/mês', 'Mín', 'Máx', 'Meses'].forEach(h => hr.append(el('th', {text: h}))); th.append(hr); t.append(th);
+  const tb = el('tbody'), seq = ['--seq-0', '--seq-1', '--seq-2', '--seq-3'];
+  const mm = vals => vals.length ? [Math.min(...vals), Math.max(...vals)] : [0, 0];
+  cats.forEach(c => {
+    const bm = byMonth(E.filter(x => x.cat === c)), vals = MESES.map(m => bm[m]), mx = Math.max(...vals);
+    const [lo, hi] = mm(full.map(m => bm[m]));
+    const tr = el('tr'); tr.append(el('td', {text: c}));
+    vals.forEach(v => { const td = el('td', {class: 'c', text: Math.abs(v) < 0.5 ? '–' : nf(v)}); if (v > 0.5 && mx > 0) td.style.background = `var(${seq[Math.min(3, Math.floor(v / mx * 3.999))]})`; else td.className = 'dim'; tr.append(td); });
+    tr.append(el('td', {class: 'avg', text: fmt0(bc[c])}), el('td', {class: 'dim', text: nf(lo)}), el('td', {class: 'dim', text: nf(hi)}), el('td', {class: 'dim', text: String(vals.filter(v => Math.abs(v) >= 0.5).length)}));
+    tb.append(tr);
+  });
+  t.append(tb);
+  const bm = byMonth(E), [lo, hi] = mm(full.map(m => bm[m]));
+  const tf = el('tfoot'), fr = el('tr'); fr.append(el('td', {text: 'Total'}));
+  MESES.forEach(m => fr.append(el('td', {text: nf(bm[m])})));
+  fr.append(el('td', {text: fmt0(avgOf(E))}), el('td', {text: nf(lo)}), el('td', {text: nf(hi)}), el('td', {text: ''})); tf.append(fr); t.append(tf);
+  document.getElementById('heatnote').textContent = 'Cor mais escura = mês mais alto dentro de cada categoria. "Meses" conta em quantos meses houve gasto. O mínimo e o máximo só usam meses completos.';
+}
+
+/* ---------- orçamento ---------- */
+function linhaMatch(t, l) {
+  const amb = l.ambito || 'familia';
+  return t.t === 'D' && (amb === 'todos' || t.a === amb) && (l.categorias || []).includes(t.cat) && (!l.subcategorias || !l.subcategorias.length || l.subcategorias.includes(t.sub));
+}
+function renderOrc() {
+  const sec = document.getElementById('sec-orc'), t = document.getElementById('orc'); t.replaceChildren();
+  const L = DATA.orcamento || [];
+  if (!L.length) { sec.hidden = true; return; }
+  sec.hidden = false;
+  document.getElementById('orcnote').textContent = (DATA.orcamento_proposto ? 'Orçamento proposto a partir das médias dos extratos, para discutir em família. ' : '') + 'Real = média mensal dos extratos (cada conta pelos seus meses). Vermelho: gasta-se mais do que o planeado.';
+  const th = el('thead'), hr = el('tr'); ['Linha', 'Planeado', 'Real', 'Diferença', 'O que inclui'].forEach((h, i) => hr.append(el('th', {text: h, class: i === 4 ? 'note' : ''}))); th.append(hr); t.append(th);
+  const tb = el('tbody'); let sp = 0, sr = 0; const usados = new Set();
+  L.forEach(l => {
+    const a = tx.filter(x => linhaMatch(x, l)); a.forEach(x => usados.add(x));
+    const real = avgOf(a) + (l.extra_mensal || 0), d = real - l.valor; sp += l.valor; sr += real;
+    tb.append(el('tr', {}, el('td', {class: 'rowname', text: l.linha}), el('td', {text: fmt(l.valor)}), el('td', {text: fmt(real)}),
+      el('td', {class: d > 0.5 ? 'up' : d < -0.5 ? 'dn' : '', text: (d > 0 ? '+' : '') + fmt(d)}),
+      el('td', {class: 'note', text: l.nota || [...(l.categorias || []), ...(l.subcategorias || [])].join(', ')})));
+  });
+  const rest = tx.filter(x => x.t === 'D' && x.a === 'familia' && !usados.has(x));
+  if (rest.length) {
+    const r = avgOf(rest); sr += r; const bc = byCatAvg(rest);
+    tb.append(el('tr', {class: 'rest'}, el('td', {class: 'rowname', text: 'Sem linha no orçamento'}), el('td', {text: '–'}), el('td', {text: fmt(r)}), el('td', {text: ''}),
+      el('td', {class: 'note', text: Object.entries(bc).filter(([, v]) => Math.abs(v) > 0.5).sort((a, b) => b[1] - a[1]).map(([c, v]) => `${c} ${fmt0(v)}`).join(' · ')})));
+  }
+  t.append(tb);
+  const tf = el('tfoot'), d = sr - sp;
+  tf.append(el('tr', {}, el('td', {text: 'Total'}), el('td', {text: fmt(sp)}), el('td', {text: fmt(sr)}), el('td', {class: d > 0.5 ? 'up' : 'dn', text: (d > 0 ? '+' : '') + fmt(d)}), el('td', {text: ''})));
+  t.append(tf);
+}
+
+/* ---------- contribuições ---------- */
+const TEM_CONJ = DATA.contas.some(c => c.tipo === 'conjunta');
+const CONTRIB = [...PESSOAS.map(p => ({id: p.id, nome: p.nome, ext: false})), ...EXT.map(p => ({id: p.id, nome: p.nome, ext: true}))];
+const ccol = i => `var(--s${(i % 7) + 1})`;
+function contribMes(m) {
+  const r = {casa: 0};
+  CONTRIB.forEach(p => { r[p.id + ':j'] = 0; r[p.id + ':d'] = 0; });
+  tx.forEach(t => {
+    if (t.m !== m) return;
+    if (t.ct && C[t.c].tipo === 'conjunta' && (r[t.ct + ':j'] !== undefined)) r[t.ct + ':j'] += t.v;
+    if (t.t === 'D' && t.a === 'familia') {
+      r.casa += -t.v;
+      const tit = C[t.c].titulares || [];
+      if (C[t.c].tipo !== 'conjunta' && tit.length === 1 && r[tit[0] + ':d'] !== undefined) r[tit[0] + ':d'] += -t.v;
+    }
+  });
+  CONTRIB.forEach(p => r[p.id] = r[p.id + ':j'] + r[p.id + ':d']);
+  r.tot = CONTRIB.reduce((s, p) => s + r[p.id], 0);
+  return r;
+}
+function renderContrib() {
+  const sec = document.getElementById('sec-con');
+  const temContrib = tx.some(t => t.ct) || tx.some(t => t.t === 'D' && t.a === 'familia' && C[t.c].tipo !== 'conjunta');
+  if (!JANELA.length || !temContrib) { sec.hidden = true; return; }
+  sec.hidden = false;
+  const rows = JANELA.map(m => ({m, r: contribMes(m)})), n = rows.length;
+  const avg = k => rows.reduce((s, x) => s + x.r[k], 0) / n;
+  const A = {tot: avg('tot'), casa: avg('casa')};
+  const box = document.getElementById('contiles'); box.replaceChildren(); box.style.setProperty('--n', Math.min(3, CONTRIB.length));
+  tile(box, 'Contribuição total para a família', fmt0(A.tot), `média por mês, ${mLongo(JANELA[0])} a ${mLongo(JANELA[n - 1])} · despesa da família ${fmt0(A.casa)}`, 'hero');
+  CONTRIB.forEach(p => { const v = avg(p.id), j = avg(p.id + ':j'), d = avg(p.id + ':d');
+    tile(box, p.nome, fmt0(v), !TEM_CONJ ? `${pct(v, A.tot)} · despesas da família pagas das contas pessoais` : `${pct(v, A.tot)} · ${fmt0(j)} para a conjunta` + (p.ext ? '' : ` + ${fmt0(d)} pago diretamente`)); });
+  legend('clegend', CONTRIB.map((p, i) => [p.nome, ccol(i)]).concat([['Despesa da família (traço)', 'var(--ink)']]));
+  stackChart(document.getElementById('cchart'), rows.map(({m, r}, i) => ({label: mCurto(m), title: mLongo(m), m, note: yearNote(m, i), total: Math.max(r.tot, r.casa), line: r.casa, r,
+    parts: CONTRIB.map(p => ({k: p.id, v: Math.max(0, r[p.id])}))})),
+    k => ccol(CONTRIB.findIndex(p => p.id === k)),
+    c => tipRows(mLongo(c.m), CONTRIB.map((p, i) => [p.nome, ccol(i), c.r[p.id]]), c.r.tot, `Despesa da família: ${fmt(c.r.casa)}`),
+    {label: 'Contribuição de cada um por mês', bw: 34, h: 260});
+  const t = document.getElementById('ctable'); t.replaceChildren();
+  const th = el('thead'), hr = el('tr'); hr.append(el('th', {text: 'Mês'}));
+  PESSOAS.forEach(p => { if (TEM_CONJ) hr.append(el('th', {text: `${p.nome} → conjunta`}), el('th', {text: `${p.nome} → direto`})); hr.append(el('th', {text: `Total ${p.nome}`})); });
+  EXT.forEach(p => hr.append(el('th', {text: p.nome})));
+  ['Total', 'Despesa da família', 'Sobra / falta'].forEach(h => hr.append(el('th', {text: h}))); th.append(hr); t.append(th);
+  const line = (lbl, r, bold) => { const tr = el('tr'); tr.append(el('td', {text: lbl, style: bold ? 'font-weight:700' : ''}));
+    PESSOAS.forEach(p => { if (TEM_CONJ) tr.append(el('td', {text: fmt(r[p.id + ':j'])}), el('td', {text: fmt(r[p.id + ':d'])})); tr.append(el('td', {text: fmt(r[p.id]), style: 'font-weight:700'})); });
+    EXT.forEach(p => tr.append(el('td', {text: fmt(r[p.id])})));
+    const d = r.tot - r.casa;
+    tr.append(el('td', {text: fmt(r.tot), style: 'font-weight:700'}), el('td', {text: fmt(r.casa)}), el('td', {class: d >= 0 ? 'pos' : 'neg-txt', text: (d > 0 ? '+' : '') + fmt(d)}));
+    return tr; };
+  const tb = el('tbody'); rows.forEach(({m, r}) => tb.append(line(mLongo(m), r))); t.append(tb);
+  const media = {}; Object.keys(rows[0].r).forEach(k => media[k] = avg(k));
+  const tf = el('tfoot'); tf.append(line('Média/mês', media, true)); t.append(tf);
+  document.getElementById('connote').textContent = `Contas dos meses em que todas as contas têm extrato completo (${n} ${n === 1 ? 'mês' : 'meses'}). ` + (!TEM_CONJ ? 'Sem conta conjunta, conta como contribuição o que cada pessoa paga, da sua conta, das despesas marcadas como da família.' : `Conta como contribuição o que cada pessoa transfere para a conta conjunta (menos o que a conjunta lhe devolve) e as despesas da família que paga diretamente da conta pessoal. Não contam a poupança, as transferências entre contas pessoais nem os extraordinários.`) + (DATA.nota_contribuicoes ? ' ' + DATA.nota_contribuicoes : '');
+}
+
+/* ---------- divisão justa ---------- */
+function renderDiv() {
+  const sec = document.getElementById('sec-div'), t = document.getElementById('dtable'); t.replaceChildren();
+  if (PESSOAS.length < 2 || !JANELA.length) { sec.hidden = true; return; }
+  sec.hidden = false;
+  const rows = JANELA.map(m => contribMes(m)), n = rows.length, avg = k => rows.reduce((s, r) => s + r[k], 0) / n;
+  const casa = avg('casa'), ext = EXT.reduce((s, p) => s + avg(p.id), 0), aDiv = Math.max(0, casa - ext);
+  const R = DATA.rendimentos || {}, temR = PESSOAS.every(p => R[p.id] && R[p.id].valor > 0);
+  const totR = temR ? PESSOAS.reduce((s, p) => s + R[p.id].valor, 0) : 0;
+  const met = DATA.divisao_metodo || (temR ? 'proporcional' : 'igual');
+  const th = el('thead'), hr = el('tr');
+  ['Pessoa', 'Rendimento/mês', 'Contribui hoje', 'Igual', 'Diferença', 'Proporcional ao rendimento', 'Diferença'].forEach(h => hr.append(el('th', {text: h}))); th.append(hr); t.append(th);
+  const tb = el('tbody');
+  PESSOAS.forEach(p => {
+    const hoje = avg(p.id), ig = aDiv / PESSOAS.length, pr = temR ? aDiv * R[p.id].valor / totR : null;
+    const dif = (a, b) => { const d = a - b; return el('td', {class: d < -0.5 ? 'up' : d > 0.5 ? 'dn' : '', text: (d > 0 ? '+' : '') + fmt(d)}); };
+    tb.append(el('tr', {}, el('td', {text: p.nome}), el('td', {text: R[p.id] ? fmt(R[p.id].valor) : '–', title: R[p.id] ? R[p.id].fonte : ''}), el('td', {text: fmt(hoje), style: 'font-weight:700'}),
+      el('td', {text: fmt(ig), style: met === 'igual' ? 'font-weight:700' : ''}), dif(hoje, ig),
+      el('td', {text: pr == null ? '–' : fmt(pr) + (temR ? ` (${pct(R[p.id].valor, totR)})` : ''), style: met === 'proporcional' ? 'font-weight:700' : ''}), pr == null ? el('td', {text: ''}) : dif(hoje, pr)));
+  });
+  t.append(tb);
+  document.getElementById('divnote').textContent = `A despesa da família (${fmt0(casa)}/mês)` + (ext ? `, menos a ajuda de fora (${fmt0(ext)}/mês),` : '') + ` dá ${fmt0(aDiv)}/mês a dividir. "Igual" divide a meias; "proporcional" divide na proporção do rendimento de cada um. Diferença positiva (verde) = contribui mais do que a divisão; negativa (vermelho) = contribui menos.` + (temR ? '' : ' Indica os rendimentos de cada pessoa para ver a divisão proporcional.') + ` Método escolhido: ${met === 'igual' ? 'igual' : 'proporcional ao rendimento'}.`;
+}
+
+/* ---------- sugestões ---------- */
+function renderSug() {
+  const sec = document.getElementById('sec-sug'), box = document.getElementById('sug'); box.replaceChildren();
+  const S = DATA.sugestoes || [];
+  if (!S.length) { sec.hidden = true; return; }
+  sec.hidden = false;
+  S.forEach(s => { const c = el('div', {class: 'card'});
+    if (s.poupanca_mensal) c.append(el('span', {class: 'gain', text: fmt0(s.poupanca_mensal) + '/mês'}));
+    c.append(el('h3', {text: s.titulo}), el('p', {class: 'small', text: s.texto}));
+    if (s.poupanca_mensal) c.append(el('span', {class: 'small muted', text: `${fmt0(s.poupanca_mensal * 12)} por ano`}));
+    box.append(c); });
+}
+
+/* ---------- fora das despesas ---------- */
+function factCard(title, rows, foot) {
+  const c = el('div', {class: 'card'}), kv = el('div', {class: 'kv'});
+  rows.forEach(([k, v, cls]) => { kv.append(el('span', {class: 'lbl' + (cls ? ' ' + cls : ''), text: k}), el('span', {class: 'v' + (cls ? ' ' + cls : ''), text: v})); });
+  c.append(el('h3', {text: title}), kv); if (foot) c.append(el('p', {class: 'small', text: foot}));
+  return c;
+}
+function renderFacts() {
+  const box = document.getElementById('facts'); box.replaceChildren();
+  PESSOAS.forEach(p => {
+    const R = tx.filter(t => t.t === 'R' && !t.ct && t.cat !== 'Por identificar' && C[t.c].tipo !== 'conjunta' && (C[t.c].titulares || []).length === 1 && C[t.c].titulares[0] === p.id);
+    if (!R.length) return;
+    const rs = {}; R.forEach(t => rs[t.sub || t.cat] = (rs[t.sub || t.cat] || 0) + t.v / C[t.c].meses);
+    const rows = Object.entries(rs).sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, fmt(v)]); rows.push(['Total por mês', fmt(Object.values(rs).reduce((a, b) => a + b, 0)), 'tot']);
+    box.append(factCard(`Entradas de ${p.nome} (média/mês)`, rows));
+  });
+  const J = tx.filter(t => t.t === 'R' && !t.ct && C[t.c].tipo === 'conjunta' && t.cat !== 'Por identificar');
+  if (J.length) { const rs = {}; J.forEach(t => rs[t.sub || t.cat] = (rs[t.sub || t.cat] || 0) + t.v);
+    box.append(factCard('Outras entradas na conta conjunta (no período)', Object.entries(rs).sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, fmt(v)]))); }
+  const P = tx.filter(t => t.t === 'P');
+  if (P.length) { const ps = {}; P.forEach(t => { const k = `${C[t.c].nome}: ${t.sub || t.cat}`; ps[k] = (ps[k] || 0) - t.v; });
+    const tot = -sum(P), mm = P.reduce((s, t) => s - t.v / C[t.c].meses, 0);
+    const rows = Object.entries(ps).sort((a, b) => b[1] - a[1]).map(([k, v]) => [k, fmt(v)]); rows.push(['Total no período', fmt(tot), 'tot'], ['Por mês', fmt(mm), 'tot']);
+    box.append(factCard('Poupança e investimento (líquido)', rows, 'Saídas para poupança, corretoras e contas próprias fora da análise, menos o que voltou.')); }
+  const X = tx.filter(t => t.t === 'X');
+  if (X.length) { const xs = {}; X.forEach(t => xs[t.sub || t.cat] = (xs[t.sub || t.cat] || 0) + t.v);
+    box.append(factCard('Extraordinários (fora das médias)', Object.entries(xs).sort((a, b) => a[1] - b[1]).map(([k, v]) => [k, (v > 0 ? '+' : '') + fmt(v)]), DATA.nota_extraordinarios || 'Gastos e entradas pontuais que distorciam a média mensal.')); }
+  const F = DATA.fora_dos_extratos || [];
+  if (F.length) { const rows = F.map(f => [f.nome + (f.pessoa ? ` (${nomeDe(f.pessoa)})` : ''), fmt(f.valor_mensal)]); rows.push(['Total por mês', fmt(F.reduce((s, f) => s + (f.valor_mensal || 0), 0)), 'tot']);
+    box.append(factCard('Fora dos extratos (por mês)', rows, 'Indicado pela família: cartões refeição, cheque-creche, numerário e outros. Não entra nas médias acima.')); }
+  const REC = DATA.recorrentes || [];
+  if (REC.length) { const rows = REC.slice(0, 10).map(r => [`${r.comerciante} (${C[r.conta] ? C[r.conta].nome : r.conta})`, fmt(r.valor_medio) + '/mês']);
+    rows.push(['Total por ano', fmt(REC.reduce((s, r) => s + r.custo_anual, 0)), 'tot']);
+    box.append(factCard('Custos fixos e subscrições', rows, 'Débitos que se repetem com valor estável. Bom ponto de partida para cortar ou renegociar.')); }
+}
+
+/* ---------- por identificar ---------- */
+function renderQ() {
+  const sec = document.getElementById('sec-q'), box = document.getElementById('qlist'); box.replaceChildren();
+  const Q = tx.filter(x => x.cat === 'Por identificar').sort((a, b) => a.v - b.v);
+  if (!Q.length) { sec.hidden = true; return; }
+  sec.hidden = false;
+  Q.forEach(x => { const r = el('div', {class: 'q'}, el('span', {class: 'd', text: dfmt(x.d)}), el('span', {class: 't', text: `${x.desc} · ${C[x.c].nome}`}), el('span', {class: 'v', text: fmt(-x.v)}));
+    const why = (DATA.notas_movimentos || {})[x.id] || x.n; if (why) r.append(el('span', {class: 'why', text: why})); box.append(r); });
+  box.append(el('div', {class: 'q', style: 'border-bottom:0'}, el('span', {}), el('span', {style: 'font-weight:700', text: `Total (${Q.length} movimentos) · ${fmt(avgOf(Q.filter(x => x.v < 0)))} por mês`}), el('span', {class: 'v', text: fmt(spend(Q))})));
+}
+
+/* ---------- movimentos ---------- */
+function renderTxFilters() {
+  const s = document.getElementById('fcat'); s.replaceChildren(el('option', {value: '', text: 'Todas as categorias'}));
+  [...new Set(tx.map(t => t.cat))].sort((a, b) => a.localeCompare(b, 'pt')).forEach(c => s.append(el('option', {value: c, text: c})));
+  const f = document.getElementById('ftipo'); f.replaceChildren(el('option', {value: 'all', text: 'Todos os tipos'}));
+  Object.entries(TIPO).forEach(([k, v]) => { if (tx.some(t => t.t === k)) f.append(el('option', {value: k, text: v})); });
+}
+function renderTx() {
+  const q = document.getElementById('q').value.trim().toLowerCase(), fc = document.getElementById('fcat').value, ft = document.getElementById('ftipo').value;
+  const a = tx.filter(t => inScope(t) && (ft === 'all' || t.t === ft) && (!fc || t.cat === fc) && (!q || (t.desc + ' ' + t.cat + ' ' + t.sub + ' ' + t.n).toLowerCase().includes(q))).sort((x, y) => y.d.localeCompare(x.d));
+  document.getElementById('txsum').textContent = `${a.length} movimentos · soma ${fmt(sum(a))}`;
+  const t = document.getElementById('txt'); t.replaceChildren();
+  const th = el('thead'), hr = el('tr'); ['Data', 'Conta', 'Descrição', 'Categoria', 'Tipo', 'Valor'].forEach(h => hr.append(el('th', {text: h}))); th.append(hr); t.append(th);
+  const tb = el('tbody');
+  a.slice(0, 400).forEach(x => { const td = el('td', {class: 'desc', text: x.desc}); if (x.n) td.append(el('div', {class: 'small', text: x.n}));
+    tb.append(el('tr', {}, el('td', {text: dfmt(x.d)}), el('td', {text: C[x.c].nome}), td, el('td', {class: 'cat', text: x.cat + (x.sub ? ' · ' + (NOME[x.sub] || x.sub) : '')}), el('td', {}, el('span', {class: 'badge', text: TIPO[x.t] || x.t})), el('td', {class: x.v > 0 ? 'pos' : '', text: fmt(x.v)}))); });
+  if (a.length > 400) tb.append(el('tr', {}, el('td', {colspan: 6, class: 'muted', text: `A mostrar 400 de ${a.length}. Usa a pesquisa para afinar.`})));
+  t.append(tb);
+}
+
+function renderFooter() {
+  const f = document.getElementById('footer'); f.replaceChildren();
+  [`Cada conta é dividida pelos meses que o seu extrato cobre (${DATA.contas.map(c => `${c.nome}: ${String(c.meses).replace('.', ',')}`).join('; ')}).`,
+   'Transferências entre contas da família, pagamentos do cartão de crédito, poupança e extraordinários não contam como despesa. Os reembolsos e as devoluções descontam na categoria onde aconteceram.',
+   `Gerado em ${DATA.gerado_em} com a skill Orçamento Familiar. Os valores vêm apenas dos extratos.`].forEach(s => f.append(el('p', {text: s})));
+}
+
+/* ---------- arranque ---------- */
+function renderScoped() {
+  document.querySelectorAll('#seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.scope === scope)));
+  renderKPIs(); renderCats(); renderDetail(); renderMonthly(); renderHeat(); renderTx();
+}
+function renderAll() { renderScoped(); renderOrc(); renderContrib(); renderDiv(); renderSug(); renderFacts(); renderQ(); renderFooter(); }
+
+const RX_EUR = /(?:[+−-]\s?)?\d+(?:[\s  .]\d{3})*(?:,\d+)?\s?€/g;
+const RX_PCT = /\d+(?:,\d+)?\s?%/g;
+const ORIG = new Map();
+function maskTree(root) {
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {acceptNode: n => n.parentElement && n.parentElement.closest('script,style') ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT});
+  const hits = []; let n;
+  while ((n = w.nextNode())) { const v = n.nodeValue; if (v.includes('€') || v.includes('%')) { RX_EUR.lastIndex = 0; RX_PCT.lastIndex = 0; if (RX_EUR.test(v) || RX_PCT.test(v)) hits.push(n); } }
+  hits.forEach(n => { if (!ORIG.has(n)) ORIG.set(n, n.nodeValue); n.nodeValue = n.nodeValue.replace(RX_EUR, MASK).replace(RX_PCT, '••%'); });
+}
+function unmaskTree() { ORIG.forEach((v, n) => { if (n.isConnected) n.nodeValue = v; }); ORIG.clear(); }
+const mo = new MutationObserver(() => { if (!privacy) return; mo.disconnect(); maskTree(document.body); observe(); });
+const observe = () => mo.observe(document.body, {childList: true, subtree: true, characterData: true});
+const eye = document.getElementById('eye');
+function syncEye() {
+  eye.setAttribute('aria-pressed', String(privacy));
+  const lbl = privacy ? 'Mostrar valores' : 'Esconder valores';
+  eye.setAttribute('aria-label', lbl); eye.title = lbl;
+  eye.querySelector('.lbl').textContent = privacy ? 'Valores escondidos' : 'Esconder valores';
+  document.documentElement.classList.toggle('privacy', privacy);
+}
+eye.addEventListener('click', () => {
+  privacy = !privacy; try { localStorage.setItem('orcamento-privacy', privacy ? '1' : '0'); } catch (e) {}
+  mo.disconnect(); if (!privacy) unmaskTree();
+  renderAll(); syncEye(); if (privacy) maskTree(document.body); observe();
+});
+['q', 'fcat', 'ftipo'].forEach(id => document.getElementById(id).addEventListener('input', renderTx));
+let rz; window.addEventListener('resize', () => { clearTimeout(rz); rz = setTimeout(() => { renderMonthly(); renderContrib(); }, 150); });
+
+renderHeader(); renderTxFilters(); renderAll(); syncEye(); if (privacy) maskTree(document.body); observe();
+</script>
+</body>
+</html>

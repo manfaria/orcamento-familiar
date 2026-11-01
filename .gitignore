@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+# nunca publicar dados reais
+*.pem
+eb_sessoes.json
+movimentos*.csv
+movimentos_meta.json
+por_identificar.csv
+analise.json
+estado.json
