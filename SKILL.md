@@ -37,9 +37,10 @@ Quem usa esta skill não é necessariamente técnico. Explica sempre o que vais 
 | `scripts/classificar.py` | Aplica as regras, deteta transferências internas, contribuições e pagamentos de cartão. Escreve `movimentos_classificados.csv` e `por_identificar.csv`. |
 | `scripts/analisar.py` | Médias, subscrições, duplicados, aumentos, comissões, despesas anuais, extraordinários, contribuições e divisão justa. Escreve `analise.json`. |
 | `scripts/construir_dashboard.py` | Gera `Orcamento_Familiar.html` a partir de `assets/dashboard.html`. |
+| `scripts/contexto_projeto.py` | Gera `contexto_projeto.md` (o contexto para um projeto do assistente) e `instrucoes_projeto.txt`. Ver passo 10. |
 | `scripts/enable_banking.py` | Opcional: descarrega movimentos diretamente dos bancos. Ver `references/enable_banking.md`. |
 | `assets/regras_base.csv` | Regras para centenas de comerciantes e serviços portugueses. É copiado para a pasta de trabalho como `regras.csv`. |
-| `references/` | `comunicacao.md`, `perguntas.md`, `config.md`, `regras.md`, `categorias.md`, `identificacao.md`, `otimizacao.md`, `divisao_justa.md`, `agendamento.md`, `enable_banking.md`. Lê cada um quando chegares ao passo correspondente. |
+| `references/` | `comunicacao.md`, `perguntas.md`, `config.md`, `regras.md`, `categorias.md`, `identificacao.md`, `otimizacao.md`, `divisao_justa.md`, `agendamento.md`, `projeto.md`, `enable_banking.md`. Lê cada um quando chegares ao passo correspondente. |
 
 Todos os scripts recebem `--config CAMINHO/config.json` e trabalham na pasta desse config. Corre-os sempre sem esconder erros e confirma o código de saída.
 
@@ -195,7 +196,14 @@ Como criar:
 - **Instrução completa:** cada execução começa uma conversa nova, sem memória desta. A instrução da tarefa tem de ser completa e independente. Usa o modelo em `references/agendamento.md`, com os caminhos verdadeiros da pasta de trabalho e dos extratos.
 - **Computador:** se a pasta estiver no computador do utilizador, a tarefa precisa do computador ligado e da app do assistente aberta à hora marcada. Explica isto ao utilizador.
 - **Confirmação:** confirma com o utilizador o dia, a hora e se as execuções avançam sozinhas ou pedem aprovação. Diz o que ficou definido.
-- **Sem ferramentas:** se esta sessão não tiver ferramentas de agendamento, diz que não consegues criar o lembrete daqui. Sugere pedir o lembrete numa conversa que o permita, ou pôr um lembrete no calendário com a frase "atualizar o Orçamento Familiar com os extratos de <mês>".
+- **Sem ferramentas de agendamento:** diz que não consegues criar o lembrete daqui e segue `references/agendamento.md`.
+
+## Passo 10. Contexto num projeto
+
+Para a família abrir uma conversa nova e perguntar, classificar uma despesa ou mudar o dashboard sem repetir tudo, o contexto vive num projeto do assistente. Segue `references/projeto.md`:
+1. corre `contexto_projeto.py` e guarda `contexto_projeto.md` no projeto como `contexto-orcamento-familiar.md`;
+2. dá à família o texto de `instrucoes_projeto.txt` para colar nas instruções do projeto;
+3. depois de qualquer alteração, volta a correr o script e substitui o documento.
 
 ## Atualização mensal
 
@@ -209,7 +217,8 @@ Como criar:
    - pergunta só pelos movimentos novos em "Por identificar";
    - `analisar.py` e `construir_dashboard.py`;
    - publica no link guardado em `dashboard_url`.
-4. **Conta o que mudou:** o mês novo face à média, categorias que subiram, subscrições novas e autorizações da Enable Banking a expirar (se usarem).
+4. **Atualiza o contexto do projeto**, se existir (passo 10).
+5. **Conta o que mudou:** o mês novo face à média, categorias que subiram, subscrições novas e autorizações da Enable Banking a expirar (se usarem).
 
 Para automatizar (descarregar todos os dias e rever as dúvidas uma vez por semana ou por mês), segue `references/enable_banking.md`.
 

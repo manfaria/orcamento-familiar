@@ -18,6 +18,11 @@ FORA = ("tools/", "dist/", ".github/", ".gitignore")
 
 ficheiros = [f for f in subprocess.run(["git", "ls-files"], cwd=RAIZ, capture_output=True, text=True, check=True)
              .stdout.splitlines() if not f.startswith(FORA)]
+# ficheiros novos que ainda não estão no git ficariam de fora dos zips: parar e avisar
+novos = [f for f in subprocess.run(["git", "ls-files", "--others", "--exclude-standard"], cwd=RAIZ, capture_output=True,
+                                   text=True, check=True).stdout.splitlines() if not f.startswith(FORA)]
+if novos:
+    raise SystemExit("Ficheiros novos fora do git (faz git add primeiro): " + ", ".join(novos))
 (RAIZ / "dist").mkdir(exist_ok=True)
 for destino, prefixo in ((f"{NOME}-claude.zip", f"{NOME}/"), (f"{NOME}.zip", "")):
     with zipfile.ZipFile(RAIZ / "dist" / destino, "w", zipfile.ZIP_DEFLATED) as z:

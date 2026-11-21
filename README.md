@@ -37,6 +37,7 @@ Pensada para famílias em Portugal: lê extratos de bancos portugueses (CSV, Exc
 7. **Sugestões:** sugere otimizações com base no que viu.
 8. **Dashboard:** gera o dashboard.
 9. **Lembrete mensal:** se quiseres, cria uma tarefa agendada no Claude que, todos os meses, verifica se já há extratos novos e atualiza o dashboard (ou pergunta-te por eles).
+10. **Contexto num projeto:** guarda no teu projeto do Claude um documento com tudo o que é preciso (contas, categorias, regras, números principais, como fazer alterações) e dá-te o texto para as instruções do projeto. Numa conversa nova, podes perguntar quanto gastaste em restaurantes ou classificar uma despesa sem explicar tudo outra vez. O documento é atualizado depois de cada alteração.
 
 No mês seguinte, basta juntar os extratos novos: as regras e as decisões ficam guardadas e só aparecem perguntas sobre movimentos novos. O dashboard é atualizado no mesmo link e pode mostrar sempre os últimos 12 meses. Quem quiser pode automatizar a recolha dos movimentos com a [Enable Banking](https://enablebanking.com/) (ver `references/enable_banking.md`).
 
@@ -132,11 +133,12 @@ orcamento-familiar/
 │   ├── classificar.py          regras, transferências internas, contribuições, cartões
 │   ├── analisar.py             médias, subscrições, duplicados, contribuições, divisão
 │   ├── construir_dashboard.py  gera Orcamento_Familiar.html
+│   ├── contexto_projeto.py     contexto e instruções para um projeto do assistente
 │   └── enable_banking.py       opcional: movimentos diretamente dos bancos
 ├── assets/
 │   ├── dashboard.html          modelo do dashboard
 │   └── regras_base.csv         regras para comerciantes portugueses
-├── references/                 comunicação, perfil da família, config, regras, categorias, identificação,
+├── references/                 comunicação, perfil da família, config, regras, categorias, identificação, projeto,
 │                               otimização, divisão justa, agendamento, Enable Banking
 ├── docs/dashboard.png          imagem de exemplo (dados fictícios)
 ├── dist/                       zips de instalação (gerados)

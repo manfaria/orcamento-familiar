@@ -85,6 +85,9 @@ O `config.json` vive na pasta de trabalho e guarda tudo o que a família decidiu
 ## Fora dos extratos
 - `fora_dos_extratos`: lista de `{"nome", "pessoa", "valor_mensal", "ambito"}` com o que a família indicou e não passa pelos extratos (cartão refeição sem extrato, cheque-creche, seguro de saúde da empresa, despesas pagas pelos avós). `ambito`: `familia` (por omissão) ou o id de uma pessoa. Aparece num cartão próprio e não entra nas médias.
 
+## Projeto do assistente
+- `pasta_familia`: caminho da pasta de trabalho como a família o vê (por exemplo `C:\Users\Ana\Documentos\orcamento-familiar`). O `contexto_projeto.py` usa-o no documento de contexto e nas instruções do projeto. Por omissão, a pasta onde os scripts correm.
+
 ## Privacidade dentro da família
 - `pessoal`: `"detalhe"` (por omissão) mostra tudo; `"categorias"` esconde as descrições dos gastos pessoais; `"total"` mostra só o total pessoal de cada pessoa. Os custos fixos e subscrições pessoais também deixam de aparecer. Afeta só o dashboard: os ficheiros de trabalho continuam completos.
 

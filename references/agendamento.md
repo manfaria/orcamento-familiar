@@ -33,6 +33,8 @@ O dashboard está publicado em <dashboard_url>; atualiza sempre esse mesmo link.
    avisos (extratos em falta, autorizações da Enable Banking a expirar) e, em lotes de até 8,
    os movimentos novos que ficaram por identificar, com data, conta, valor e contexto.
    As respostas da família são registadas em regras.csv e decisoes.md na próxima conversa.
+6. Se a família tiver um projeto com o documento contexto-orcamento-familiar.md: corre contexto_projeto.py
+   e substitui esse documento pela versão nova (ver references/projeto.md).
 
 Nunca inventes valores: tudo vem dos extratos. Não envies os extratos para outros serviços.
 ```
